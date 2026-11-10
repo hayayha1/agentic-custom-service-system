@@ -25,12 +25,13 @@ def test_full_business_chain_same_tenant_group():
     assert user_data["product_code"] == "SAAS_CLOUD"
     assert user_data["group_name"] == "云创云服务客服组"
     user_token = user_data["token"]
+    customer_id = user_data["user_id"]
     user_headers = {"Authorization": f"Bearer {user_token}"}
 
     # 用户进线创建会话
     create_session = client.post("/api/v1/chat/sessions", json={
         "product_code": "SAAS_CLOUD",
-        "customer_id": "cust_e2e_01",
+        "customer_id": customer_id,
         "customer_name": "张先生"
     }, headers=user_headers)
     assert create_session.status_code == 200, create_session.text
@@ -39,18 +40,18 @@ def test_full_business_chain_same_tenant_group():
     # 用户智能问答 (调用 LangGraph 与知识库检索)
     bot_msg = client.post("/api/v1/chat", json={
         "product_code": "SAAS_CLOUD",
-        "customer_id": "cust_e2e_01",
+        "customer_id": customer_id,
         "session_id": session_id,
         "query": "请问SaaS平台支持多租户数据隔离吗？"
     }, headers=user_headers)
     assert bot_msg.status_code == 200, bot_msg.text
     bot_res = bot_msg.json()
-    assert bot_res["reply_type"] in ["DIRECT", "CLARIFY", "HUMAN", "HUMAN_AGENT", "TRANSACTION", "CHAT", "FALLBACK"]
+    assert bot_res["reply_type"] in ["DIRECT_ANSWER", "RECOMMEND_QUESTIONS", "HUMAN_AGENT", "TRANSACTION", "CHITCHAT", "FALLBACK"]
 
     # 用户申请转接人工
     transfer_res = client.post("/api/v1/chat/transfer-human", json={
         "session_id": session_id,
-        "customer_id": "cust_e2e_01"
+        "customer_id": customer_id
     }, headers=user_headers)
     assert transfer_res.status_code == 200, transfer_res.text
 

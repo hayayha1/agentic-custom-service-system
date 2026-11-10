@@ -1,0 +1,32 @@
+{
+  "version": "route_planner_v1",
+  "authored_at": "2026-11-07T05:43:25.643268+00:00",
+  "cases": 100,
+  "groups": {
+    "fast_greeting": 10,
+    "fast_knowledge": 20,
+    "fast_handoff": 10,
+    "deep_sequential": 20,
+    "deep_parallel": 15,
+    "deep_conditional": 15,
+    "deep_mixed": 10
+  },
+  "scopes": {
+    "current_regression": 82,
+    "target_capability": 18
+  },
+  "public_sha256": "32b618931d387505361957ab49435cb94503cc3f63ce789406151302bf0bdd62",
+  "answer_key_sha256": "a7acffed7be4d3d737fa3940cb3c43349c422a9448ee9fad9e8d8d92b6116b4e",
+  "source_hashes": {
+    "app/services/agent/planning.py": "d075eb9bd11bcfbeb0e19743ab908c5a81a86ff3f3a0b2ecd2e83921cac2edfa",
+    "app/services/agent/planner.py": "271bda5a309af76a692e8e0a6fb2f7f91af51139c60aa17402ba38146e3e1bbb",
+    "app/services/agent/llm.py": "8f0fd1910eb5279553af79dda59a41c16d8bdaada3e2f6b55e448000b0158907",
+    "app/services/agent/contracts.py": "9d9927a5743aa50c4bb44d0d92c787f00452dde0b1e9a80f4f98f98aa878bc98",
+    "app/services/agent/tools.py": "29ca9c4827c8da3cb4875e2a791f870d5c7e1220d5a91c7beced4cebb048a2c9",
+    "app/services/agent/policy.py": "eaff4e549441974d82945b554ca15d85fc32c7625c195a66600eac9d772e551a",
+    "app/services/model_service.py": "736d58de52fac47ce40abbcb672e32025d4570538dcb4aab96c2657113a9ef94",
+    "app/core/config.py": "864f56b180d1d01d8f03d63700239aff7eeb808644a1ad365eb96852f48a4027"
+  },
+  "builder_sha256": "e66ed54715f891a15aa38321f600f80fe90cc921772051cd5ea89b7a95cf12cf",
+  "blind_protocol": "predict process reads only public inputs; score only after inference_seal.json"
+}

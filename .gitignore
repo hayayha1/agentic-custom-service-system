@@ -9,6 +9,13 @@ __pycache__/
 .env
 .env.local
 .env.*.local
+.env.*
+!.env.example
+.venv/
+venv/
+
+# Local test runs and generated scratch artifacts
+scratch/
 
 # Databases
 *.db

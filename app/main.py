@@ -308,7 +308,10 @@ async def seed_demo_data():
             ))
             await db.commit()
 
-        res = await db.execute(select(KnowledgeBase).limit(1))
+        res = await db.execute(select(KnowledgeBase).where(
+            KnowledgeBase.tenant_id == "tenant_default",
+            KnowledgeBase.product_code == "SAAS_CLOUD"
+        ).limit(1))
         existing_kb = res.scalars().first()
         if existing_kb:
             # 即使知识库已存在，也确保会话被初始化
@@ -609,7 +612,16 @@ async def lifespan(app: FastAPI):
     # 启动时初始化数据库与样例数据
     await init_db()
     await seed_demo_data()
+    from app.services.agent.storage import agent_store
+    from app.services.agent.observability import agent_telemetry
+    await agent_store.setup()
+    agent_telemetry.configure()
     yield
+    if agent_store._redis:
+        await agent_store._redis.aclose()
+    if agent_telemetry.tracer:
+        agent_telemetry.provider.shutdown()
+    await agent_store.engine.dispose()
 
 app = FastAPI(
     title=settings.PROJECT_NAME,

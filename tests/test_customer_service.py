@@ -303,6 +303,10 @@ async def test_auth_login_and_agent_chat():
         session_id = res.json()["id"]
 
         # 5.2 客服发消息
+        transfer = await ac.post("/api/v1/chat/transfer-human", json={
+            "session_id": session_id, "customer_id": "cust_888"
+        }, headers=cust_headers)
+        assert transfer.status_code == 200
         agent_headers = {"X-User-Role": "tech_agent", "X-User-Id": "agent_1028"}
         res = await ac.post("/api/v1/chat", json={
             "session_id": session_id,
@@ -318,7 +322,7 @@ async def test_auth_login_and_agent_chat():
         assert res.status_code == 200
         msgs = res.json()
         assert len(msgs) >= 1
-        agent_msg = next((m for m in msgs if m["role"] == "human_agent"), None)
+        agent_msg = next((m for m in msgs if m["role"] == "human_agent" and "已为您处理好账号问题" in m["content"]), None)
         assert agent_msg is not None
         assert "已为您处理好账号问题" in agent_msg["content"]
 

@@ -66,13 +66,11 @@ class KnowledgeCollaboratorTool:
             })
 
         # 1. 高置信度直接回答
-        if top_score >= th_direct:
-            answer = await model_service.generate_direct_answer(raw_query, chunks)
-            
-            # 若有实时业务数据，进行事实交叉融合
-            if live_business_context and live_business_context.get("order"):
-                ord_info = live_business_context["order"]
-                answer += f"\n\n💡 经系统核对您名下的最新订单（{ord_info.get('order_id')} · {ord_info.get('status_desc') or ord_info.get('status')}），符合上述服务条款。您可随时告诉我为您继续跟进。"
+        if top_score >= th_direct and chunks:
+            # Extractive grounding prevents generated policy details or unsupported
+            # claims that an arbitrary order qualifies for a retrieved policy.
+            from app.services.agent.safety import grounded_answer
+            answer = grounded_answer(chunks)
 
             return KnowledgeCollaboratorResult(
                 content=answer,

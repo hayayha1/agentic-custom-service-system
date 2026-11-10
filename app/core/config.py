@@ -44,6 +44,21 @@ class Settings(BaseSettings):
     RERANK_BASE_URL: Optional[str] = Field(default_factory=lambda: os.getenv("RERANK_BASE_URL", "https://api.siliconflow.cn/v1"))
     RERANK_MODEL: str = Field(default_factory=lambda: os.getenv("RERANK_MODEL", "BAAI/bge-reranker-v2-m3"))
 
+    # Agent 状态库独立于聊天事务，避免 SQLite 长事务阻塞快照写入。
+    AGENT_DATABASE_URL: str = "sqlite+aiosqlite:///./agent_state.db"
+    AGENT_REDIS_URL: Optional[str] = None
+    AGENT_MAX_ITERATIONS: int = Field(default=8, ge=1, le=32)
+    AGENT_TIMEOUT_SECONDS: float = Field(default=60.0, gt=0, le=300)
+    AGENT_MEMORY_TTL_SECONDS: int = 86400
+    AGENT_MEMORY_WINDOW: int = 5
+    AGENT_CONTEXT_TOKENS: int = 3000
+    AGENT_TOOL_TIMEOUT_SECONDS: float = 10.0
+    AGENT_TOOL_RETRIES: int = Field(default=3, ge=0, le=3)
+    AGENT_TOOL_RATE_LIMIT: int = 20
+    AGENT_CIRCUIT_THRESHOLD: int = 5
+    AGENT_CIRCUIT_RESET_SECONDS: int = 60
+    AGENT_OTLP_ENDPOINT: Optional[str] = None
+
     # 敏感词词库列表（基础默认词，支持扩展）
     SENSITIVE_WORDS: List[str] = [
         "退款漏洞", "刷单套现", "攻击系统", "黑客渗透", "洗钱",

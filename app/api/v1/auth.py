@@ -264,7 +264,7 @@ async def login(payload: LoginRequest):
                 username=u,
                 role=conf["role"],
                 display_name=conf["display_name"],
-                token=f"token_{u}_{conf['role']}",
+                token=f"token_{conf['user_id']}_{conf['role']}",
                 tenant_id=tenant_id,
                 tenant_name=tenant_name,
                 is_platform_admin=is_platform_admin,

@@ -1,0 +1,16 @@
+{
+  "title": "知枢 Agent 运行概览",
+  "uid": "zhishu-agent",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "time": {"from": "now-1h", "to": "now"},
+  "templating": {"list": [{"name": "DS_PROMETHEUS", "type": "datasource", "query": "prometheus", "label": "Prometheus"}]},
+  "panels": [
+    {"id": 1, "type": "timeseries", "title": "请求速率", "datasource": "${DS_PROMETHEUS}", "gridPos": {"x": 0, "y": 0, "w": 12, "h": 8}, "targets": [{"expr": "sum(rate(agent_events_total{event=\"requests\"}[5m]))", "legendFormat": "请求 / 秒"}]},
+    {"id": 2, "type": "timeseries", "title": "P95 响应时间", "datasource": "${DS_PROMETHEUS}", "gridPos": {"x": 12, "y": 0, "w": 12, "h": 8}, "targets": [{"expr": "histogram_quantile(0.95, sum by(le) (rate(agent_request_duration_seconds_bucket[5m])))", "legendFormat": "秒"}]},
+    {"id": 3, "type": "timeseries", "title": "任务完成、澄清与升级", "datasource": "${DS_PROMETHEUS}", "gridPos": {"x": 0, "y": 8, "w": 12, "h": 8}, "targets": [{"expr": "sum by(event) (rate(agent_events_total{event=~\"status_completed|status_waiting_clarification|status_waiting_approval|status_human|status_failed\"}[5m]))", "legendFormat": "{{event}}"}]},
+    {"id": 4, "type": "timeseries", "title": "工具失败、熔断与安全拦截", "datasource": "${DS_PROMETHEUS}", "gridPos": {"x": 12, "y": 8, "w": 12, "h": 8}, "targets": [{"expr": "sum by(event) (rate(agent_events_total{event=~\"tool_failure|circuit_open|rate_limit|status_blocked|status_iteration_limit\"}[5m]))", "legendFormat": "{{event}}"}]},
+    {"id": 5, "type": "timeseries", "title": "模型 Token 消耗", "datasource": "${DS_PROMETHEUS}", "gridPos": {"x": 0, "y": 16, "w": 24, "h": 8}, "targets": [{"expr": "sum(rate(agent_events_total{event=\"tokens\"}[5m]))", "legendFormat": "Token / 秒"}]}
+  ]
+}

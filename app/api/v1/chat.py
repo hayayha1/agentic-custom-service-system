@@ -46,6 +46,28 @@ PRODUCT_DEFAULT_AGENT = {
     "FIN_AI": "agent_1030"
 }
 
+
+def check_session_access(session, user):
+    if not session:
+        raise HTTPException(status_code=404, detail="会话不存在")
+    if user.role == ROLE_PLATFORM_ADMIN or session.tenant_id != (user.tenant_id or "tenant_default"):
+        raise HTTPException(status_code=403, detail="无权访问该会话")
+    if user.is_end_user and session.customer_id != user.user_id:
+        raise HTTPException(status_code=403, detail="只能访问本人的会话")
+    if user.is_service_agent and session.assigned_agent != user.user_id:
+        raise HTTPException(status_code=403, detail="只能处理分配给自己的会话")
+
+
+async def cancel_agent_task(session, user):
+    from app.services.agent.contracts import RequestIdentity
+    from app.services.agent.storage import SessionBusy
+    try:
+        await customer_service_graph.cancel(RequestIdentity(
+            tenant_id=session.tenant_id, customer_id=session.customer_id, user_id=user.user_id,
+            role=user.role, session_id=session.id))
+    except SessionBusy as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
 # 1. 查询会话列表 (普通用户仅看本人会话，技术客服仅看分配给自己的进行中会话，质检主管/超管可巡查全局会话)
 @router.get(
     "/sessions", 
@@ -94,6 +116,8 @@ async def create_chat_session(
     db: AsyncSession = Depends(get_db)
 ):
     target_tenant = current_user.tenant_id or "tenant_default"
+    if current_user.is_end_user and payload.customer_id != current_user.user_id:
+        raise HTTPException(status_code=403, detail="只能为本人创建客服会话")
     if payload.force_new:
         # 将用户历史所有未结单会话标记为 CLOSED，确保开启纯净新会话
         close_old_stmt = (
@@ -154,7 +178,9 @@ async def create_chat_session(
     summary="加载会话历史消息流",
     dependencies=[Depends(require_roles([ROLE_ADMIN, ROLE_TECH_AGENT, ROLE_USER]))]
 )
-async def get_session_messages(session_id: str, db: AsyncSession = Depends(get_db)):
+async def get_session_messages(session_id: str, db: AsyncSession = Depends(get_db),
+                               current_user: CurrentUser = Depends(get_current_user)):
+    check_session_access(await db.get(ChatSession, session_id), current_user)
     stmt = select(ChatMessage).where(ChatMessage.session_id == session_id).order_by(ChatMessage.created_at.asc())
     res = await db.execute(stmt)
     return res.scalars().all()
@@ -172,6 +198,8 @@ async def chat_interaction(
     db: AsyncSession = Depends(get_db)
 ):
     target_tenant = current_user.tenant_id or "tenant_default"
+    if current_user.is_end_user and payload.customer_id != current_user.user_id:
+        raise HTTPException(status_code=403, detail="只能操作本人的客户业务")
 
     # 4.0 租户状态检查与问答用量监控
     from app.models.tenant import Tenant
@@ -184,6 +212,14 @@ async def chat_interaction(
     session = None
     if payload.session_id:
         session = await db.get(ChatSession, payload.session_id)
+        if not session:
+            raise HTTPException(status_code=404, detail="会话不存在")
+        if session.tenant_id != target_tenant or session.customer_id != payload.customer_id:
+            raise HTTPException(status_code=403, detail="无权访问该会话")
+        if session.product_code != payload.product_code or session.status == "CLOSED":
+            raise HTTPException(status_code=409, detail="会话产品不匹配或会话已关闭")
+        if current_user.is_service_agent and session.assigned_agent != current_user.user_id:
+            raise HTTPException(status_code=403, detail="只能处理分配给自己的会话")
     if not session:
         stmt = select(ChatSession).where(
             ChatSession.customer_id == payload.customer_id,
@@ -299,6 +335,10 @@ async def chat_interaction(
         "product_code": payload.product_code,
         "customer_id": payload.customer_id,
         "session_id": session.id,
+        "tenant_id": target_tenant,
+        "user_id": current_user.user_id,
+        "role": current_user.role,
+        "approval_id": payload.approval_id,
         "raw_query": payload.query,
         "cleaned_query": "",
         "rewritten_query": "",
@@ -314,7 +354,14 @@ async def chat_interaction(
         "business_data": None
     }
 
-    final_state = await customer_service_graph.ainvoke(initial_state)
+    from app.services.agent.storage import SessionBusy
+    try:
+        final_state = await customer_service_graph.ainvoke(initial_state)
+    except SessionBusy as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    if final_state.get("status") == "human":
+        session.status = "HUMAN_CONNECTED"
+        session.assigned_agent = PRODUCT_DEFAULT_AGENT.get(session.product_code, "agent_1028")
 
     # 4.7 组装响应与溯源
     sources_raw = final_state.get("sources", [])
@@ -364,6 +411,9 @@ async def chat_interaction(
     )
     db.add(assistant_msg)
     await db.flush()
+    if final_state.get("trace_id"):
+        from app.services.agent.storage import agent_store, tenant_key
+        await agent_store.put(tenant_key("message_trace", target_tenant, assistant_msg.id), {"trace_id": final_state["trace_id"]})
 
     # 4.9 隐性未命中类 BadCase 自动感知 (低于相似度阈值或命中 Fallback)
     if score < 0.40 or reply_type == "FALLBACK":
@@ -421,6 +471,7 @@ async def chat_interaction(
 
     return ChatResponse(
         message_id=assistant_msg.id,
+        agent_trace_id=final_state.get("trace_id"),
         session_id=session.id,
         reply_type=reply_type,
         confidence_score=score,
@@ -439,10 +490,13 @@ async def chat_interaction(
     summary="用户申请接入人工座席",
     dependencies=[Depends(require_roles([ROLE_ADMIN, ROLE_TECH_AGENT, ROLE_USER]))]
 )
-async def transfer_to_human(payload: TransferHumanRequest, db: AsyncSession = Depends(get_db)):
+async def transfer_to_human(payload: TransferHumanRequest, db: AsyncSession = Depends(get_db),
+                            current_user: CurrentUser = Depends(get_current_user)):
     session = await db.get(ChatSession, payload.session_id)
     if not session:
         raise HTTPException(status_code=404, detail="会话不存在")
+    check_session_access(session, current_user)
+    await cancel_agent_task(session, current_user)
 
     # 根据产品线路由专属技术客服工号
     target_agent = PRODUCT_DEFAULT_AGENT.get(session.product_code, "agent_1028")
@@ -484,10 +538,12 @@ async def transfer_to_human(payload: TransferHumanRequest, db: AsyncSession = De
     summary="用户主动挂断人工客服，恢复AI接待",
     dependencies=[Depends(require_roles([ROLE_ADMIN, ROLE_TECH_AGENT, ROLE_USER]))]
 )
-async def hangup_human_service(session_id: str = Query(...), db: AsyncSession = Depends(get_db)):
+async def hangup_human_service(session_id: str = Query(...), db: AsyncSession = Depends(get_db),
+                              current_user: CurrentUser = Depends(get_current_user)):
     session = await db.get(ChatSession, session_id)
     if not session:
         raise HTTPException(status_code=404, detail="会话不存在")
+    check_session_access(session, current_user)
 
     session.status = "AI_SERVICE"
     assigned = session.assigned_agent

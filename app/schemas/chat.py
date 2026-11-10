@@ -20,6 +20,7 @@ class ActionButton(BaseModel):
     payload: Optional[Dict[str, Any]] = None
 
 class ChatMessageRequest(BaseModel):
+    approval_id: Optional[str] = Field(None, max_length=64, description="确认卡片标识，阻止历史卡片误授权其他操作")
     product_code: str = Field(default="SAAS_CLOUD", description="业务产品编码")
     kb_id: Optional[str] = Field(None, description="可选指定知识库ID")
     customer_id: str = Field(default="user_001", description="多客户会话隔离ID")
@@ -27,6 +28,7 @@ class ChatMessageRequest(BaseModel):
     query: str = Field(..., min_length=1, max_length=1000, description="客户原始问句")
 
 class ChatResponse(BaseModel):
+    agent_trace_id: Optional[str] = Field(None, description="Agent 执行审计轨迹编号")
     message_id: Optional[str] = Field(None, description="助手消息记录ID")
     session_id: str = Field(..., description="当前会话ID")
     reply_type: str = Field(

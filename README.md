@@ -2,6 +2,8 @@
 
 基于 **Python + FastAPI + PostgreSQL (pgvector) + LangGraph + SQLAlchemy** 构建的高可用智能客服知识库与智能检索系统。
 
+Agent 已升级为可持久化的 Plan-and-Execute / ReAct 工作流，支持统一工具网关、审批恢复、三级记忆、观测和离线评测门禁。配置、迁移与验证边界见 [Agent 重构运行说明](docs/AGENT_REFACTOR.md)。
+
 ---
 
 ## 🌟 系统核心特性

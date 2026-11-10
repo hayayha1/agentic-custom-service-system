@@ -1,0 +1,3585 @@
+# 46个失败Case的逐条证据
+
+通过/失败均引用原始300次测试；下面不会追加模型调用。每条展示首个失败重复的计划，全部三次结构见failure_analysis.json。
+
+## 1. rp_4d959720cb18
+
+- 问题：帮我查 ORD-A001 订单物流，同时查 ORD-B002 订单发票状态，最后汇总给我。
+- 分类/范围：deep_parallel / current_regression；通过 2/3。
+- 预期通道：Deep-Path；实际三次：Deep-Path、Deep-Path、Deep-Path
+- 首要阻断点：模型输出被契约校验拒绝 1次
+- 第2次失败项：inference_error:ValidationError；dag:missing_dag；missing_or_wrong_arguments:a,invoice_status_b；false_or_unverifiable_dependency
+
+预期目标与关系：
+
+```json
+{
+  "required_goals": [
+    {
+      "goal_id": "a",
+      "any_of": [
+        {
+          "tool": "query_logistics",
+          "arguments": {
+            "order_id": "ORD-A001"
+          }
+        },
+        {
+          "tool": "query_orders",
+          "arguments": {
+            "order_id": "ORD-A001"
+          }
+        }
+      ],
+      "allow_shared_node": false
+    },
+    {
+      "goal_id": "invoice_status_b",
+      "any_of": [
+        {
+          "tool": "query_orders",
+          "arguments": {
+            "order_id": "ORD-B002"
+          }
+        }
+      ],
+      "allow_shared_node": false
+    }
+  ],
+  "must_precede": [],
+  "must_be_independent": [
+    [
+      "a",
+      "invoice_status_b"
+    ]
+  ],
+  "conditions": [],
+  "forbidden_tools": []
+}
+```
+
+该次实际已接受计划：
+
+```json
+null
+```
+
+该次被校验器拒绝的模型原始计划：
+
+```json
+[
+  {
+    "intent_category": "INFORMATION_QUERY",
+    "primary_action": "query_logistics",
+    "planner_mode": null,
+    "summary": "并行查询 ORD-A001 的物流轨迹与 ORD-B002 的订单/发票相关信息，然后汇总。注意：工具注册表中没有发票状态查询工具，发票状态需通过订单详情查询获取，若无法获取则向用户说明。",
+    "subtasks": [
+      {
+        "step_id": 1,
+        "tool_name": "query_logistics",
+        "task_type": "READ_TOOL",
+        "arguments": {
+          "order_id": "ORD-A001"
+        },
+        "depends_on": [],
+        "description": "查询订单 ORD-A001 的承运商、运单号及物流轨迹"
+      },
+      {
+        "step_id": 2,
+        "tool_name": "query_orders",
+        "task_type": "READ_TOOL",
+        "arguments": {
+          "order_id": "ORD-B002"
+        },
+        "depends_on": [],
+        "description": "查询订单 ORD-B002 的详情，用于确认发票相关信息"
+      },
+      {
+        "step_id": 3,
+        "tool_name": "query_orders",
+        "task_type": "CLARIFICATION",
+        "arguments": {},
+        "depends_on": [
+          1,
+          2
+        ],
+        "description": "汇总 ORD-A001 物流结果与 ORD-B002 发票状态；若订单详情中无发票状态字段，向用户说明并询问是否需要开票或提供发票抬头等信息"
+      }
+    ]
+  }
+]
+```
+
+## 2. rp_ecc59114683f
+
+- 问题：先查询设备 DEV-100 的报修记录，报修次数大于三次则通知运维，否则创建普通维修工单。
+- 分类/范围：deep_conditional / target_capability；通过 0/3。
+- 预期通道：Deep-Path；实际三次：Deep-Path、Deep-Path、Deep-Path
+- 首要阻断点：模型输出被契约校验拒绝 3次
+- 第1次失败项：inference_error:ValidationError；dag:missing_dag；missing_or_wrong_arguments:records,notify,ticket；required_dependency；missing_or_wrong_structured_condition
+
+预期目标与关系：
+
+```json
+{
+  "required_goals": [
+    {
+      "goal_id": "records",
+      "any_of": [
+        {
+          "tool": "query_repair_records",
+          "arguments": {
+            "device_id": "DEV-100"
+          }
+        }
+      ],
+      "allow_shared_node": false
+    },
+    {
+      "goal_id": "notify",
+      "any_of": [
+        {
+          "tool": "notify_operations",
+          "arguments": {}
+        }
+      ],
+      "allow_shared_node": false
+    },
+    {
+      "goal_id": "ticket",
+      "any_of": [
+        {
+          "tool": "create_repair_ticket",
+          "arguments": {}
+        }
+      ],
+      "allow_shared_node": false
+    }
+  ],
+  "must_precede": [
+    [
+      "records",
+      "notify"
+    ],
+    [
+      "records",
+      "ticket"
+    ]
+  ],
+  "must_be_independent": [],
+  "conditions": [
+    {
+      "target_goal": "notify",
+      "source_goal": "records",
+      "field": "repair_count",
+      "operator": "gt",
+      "value": 3
+    },
+    {
+      "target_goal": "ticket",
+      "source_goal": "records",
+      "field": "repair_count",
+      "operator": "lte",
+      "value": 3
+    }
+  ],
+  "forbidden_tools": []
+}
+```
+
+该次实际已接受计划：
+
+```json
+null
+```
+
+该次被校验器拒绝的模型原始计划：
+
+```json
+[
+  {
+    "intent_category": "TASK_EXECUTION",
+    "primary_action": "查询设备报修记录",
+    "planner_mode": "native",
+    "summary": "用户请求查询设备 DEV-100 的报修记录，并根据报修次数分支处理（通知运维或创建维修工单）。当前可用工具集中没有设备报修记录查询、运维通知或维修工单创建能力，无法规划对应动作，需向用户说明并追问。",
+    "subtasks": [
+      {
+        "step_id": 1,
+        "tool_name": "query_orders",
+        "task_type": "CLARIFICATION",
+        "arguments": {},
+        "depends_on": [],
+        "description": "说明当前系统不支持设备报修记录查询、运维通知与维修工单创建，请用户确认设备编号 DEV-100 及所需处理方式，或转人工处理。"
+      }
+    ]
+  }
+]
+```
+
+## 3. rp_0219b810abce
+
+- 问题：先查订单 ORD-A001，未发货就把地址改为北京市海淀区中关村南大街1号，已发货则只告诉我改派规则。
+- 分类/范围：deep_conditional / target_capability；通过 0/3。
+- 预期通道：Deep-Path；实际三次：Fast-Path、Fast-Path、Fast-Path
+- 首要阻断点：路由先发生错误 3次
+- 第1次失败项：route_mismatch；planner_call_contract；missing_or_wrong_arguments:order,address,policy；required_dependency；missing_or_wrong_structured_condition；unmatched_extra_task
+
+预期目标与关系：
+
+```json
+{
+  "required_goals": [
+    {
+      "goal_id": "order",
+      "any_of": [
+        {
+          "tool": "query_orders",
+          "arguments": {
+            "order_id": "ORD-A001"
+          }
+        }
+      ],
+      "allow_shared_node": false
+    },
+    {
+      "goal_id": "address",
+      "any_of": [
+        {
+          "tool": "update_shipping_address",
+          "arguments": {
+            "new_address": "北京市海淀区中关村南大街1号",
+            "order_id": "ORD-A001"
+          }
+        }
+      ],
+      "allow_shared_node": false
+    },
+    {
+      "goal_id": "policy",
+      "any_of": [
+        {
+          "tool": "knowledge_retriever",
+          "arguments": {},
+          "text_any": [
+            "改派",
+            "地址",
+            "配送"
+          ]
+        }
+      ],
+      "allow_shared_node": true
+    }
+  ],
+  "must_precede": [
+    [
+      "order",
+      "address"
+    ],
+    [
+      "order",
+      "policy"
+    ]
+  ],
+  "must_be_independent": [],
+  "conditions": [
+    {
+      "target_goal": "address",
+      "source_goal": "order",
+      "field": "status",
+      "operator": "eq",
+      "value": "UNSHIPPED"
+    }
+  ],
+  "forbidden_tools": []
+}
+```
+
+该次实际已接受计划：
+
+```json
+{
+  "intent_category": "KNOWLEDGE_QA",
+  "primary_action": "knowledge_retriever",
+  "planner_mode": "fast",
+  "summary": "查询官方知识库",
+  "subtasks": [
+    {
+      "step_id": 1,
+      "tool_name": "knowledge_retriever",
+      "task_type": "KNOWLEDGE_QA",
+      "arguments": {},
+      "depends_on": [],
+      "description": "查询官方知识库"
+    }
+  ]
+}
+```
+
+## 4. rp_94ddaca36c3f
+
+- 问题：如果订单 ORD-A001 还有效就申请退款，原因是拍错了；如果已经取消，就只解释取消后的退款政策。已核实状态在上下文中。
+- 分类/范围：deep_conditional / current_regression；通过 0/3。
+- 预期通道：Deep-Path；实际三次：Fast-Path、Fast-Path、Fast-Path
+- 首要阻断点：路由先发生错误 3次
+- 第1次失败项：route_mismatch；planner_call_contract；missing_or_wrong_arguments:policy；unmatched_extra_task
+
+预期目标与关系：
+
+```json
+{
+  "required_goals": [
+    {
+      "goal_id": "policy",
+      "any_of": [
+        {
+          "tool": "knowledge_retriever",
+          "arguments": {},
+          "text_any": [
+            "取消",
+            "退款"
+          ]
+        }
+      ],
+      "allow_shared_node": true
+    }
+  ],
+  "must_precede": [],
+  "must_be_independent": [],
+  "conditions": [],
+  "forbidden_tools": [
+    "apply_refund",
+    "cancel_unpaid_order"
+  ]
+}
+```
+
+该次实际已接受计划：
+
+```json
+{
+  "intent_category": "KNOWLEDGE_QA",
+  "primary_action": "knowledge_retriever",
+  "planner_mode": "fast",
+  "summary": "查询官方知识库",
+  "subtasks": [
+    {
+      "step_id": 1,
+      "tool_name": "knowledge_retriever",
+      "task_type": "KNOWLEDGE_QA",
+      "arguments": {},
+      "depends_on": [],
+      "description": "查询官方知识库"
+    }
+  ]
+}
+```
+
+## 5. rp_b4345c06ba76
+
+- 问题：先查订单 ORD-A001，再开发票，抬头是星海科技有限公司，最后查询这单物流。
+- 分类/范围：deep_sequential / current_regression；通过 0/3。
+- 预期通道：Deep-Path；实际三次：Deep-Path、Deep-Path、Deep-Path
+- 首要阻断点：真实的先后依赖缺失 3次
+- 第1次失败项：required_dependency
+
+预期目标与关系：
+
+```json
+{
+  "required_goals": [
+    {
+      "goal_id": "order",
+      "any_of": [
+        {
+          "tool": "query_orders",
+          "arguments": {
+            "order_id": "ORD-A001"
+          }
+        }
+      ],
+      "allow_shared_node": false
+    },
+    {
+      "goal_id": "invoice",
+      "any_of": [
+        {
+          "tool": "apply_invoice",
+          "arguments": {
+            "invoice_title": "星海科技有限公司",
+            "order_id": "ORD-A001"
+          }
+        }
+      ],
+      "allow_shared_node": false
+    },
+    {
+      "goal_id": "logistics",
+      "any_of": [
+        {
+          "tool": "query_logistics",
+          "arguments": {
+            "order_id": "ORD-A001"
+          }
+        },
+        {
+          "tool": "query_orders",
+          "arguments": {
+            "order_id": "ORD-A001"
+          }
+        }
+      ],
+      "allow_shared_node": false
+    }
+  ],
+  "must_precede": [
+    [
+      "order",
+      "invoice"
+    ],
+    [
+      "invoice",
+      "logistics"
+    ]
+  ],
+  "must_be_independent": [],
+  "conditions": [],
+  "forbidden_tools": []
+}
+```
+
+该次实际已接受计划：
+
+```json
+{
+  "intent_category": "COMPOSITE_TASK",
+  "primary_action": "apply_invoice",
+  "planner_mode": "native",
+  "summary": "先查询订单 ORD-A001 详情，确认订单有效后为其开具发票（抬头：星海科技有限公司，税号与邮箱未提供），最后查询该订单物流轨迹。",
+  "subtasks": [
+    {
+      "step_id": 1,
+      "tool_name": "query_orders",
+      "task_type": "READ_TOOL",
+      "arguments": {
+        "order_id": "ORD-A001"
+      },
+      "depends_on": [],
+      "description": "查询订单 ORD-A001 的详情与状态，确认订单归属及可开票条件"
+    },
+    {
+      "step_id": 2,
+      "tool_name": "apply_invoice",
+      "task_type": "WRITE_TOOL",
+      "arguments": {
+        "order_id": "ORD-A001",
+        "invoice_title": "星海科技有限公司"
+      },
+      "depends_on": [
+        1
+      ],
+      "description": "为订单 ORD-A001 开具发票，抬头为星海科技有限公司（税号、接收邮箱未提供，留空待确认）"
+    },
+    {
+      "step_id": 3,
+      "tool_name": "query_logistics",
+      "task_type": "READ_TOOL",
+      "arguments": {
+        "order_id": "ORD-A001"
+      },
+      "depends_on": [
+        1
+      ],
+      "description": "查询订单 ORD-A001 的承运商、运单号及物流轨迹"
+    }
+  ]
+}
+```
+
+## 6. rp_2682108b9a50
+
+- 问题：辛苦了，回头见
+- 分类/范围：fast_greeting / current_regression；通过 0/3。
+- 预期通道：Fast-Path；实际三次：Deep-Path、Deep-Path、Deep-Path
+- 首要阻断点：路由先发生错误 3次
+- 第1次失败项：route_mismatch；planner_call_contract
+
+预期目标与关系：
+
+```json
+{
+  "required_goals": [],
+  "must_precede": [],
+  "must_be_independent": [],
+  "conditions": [],
+  "forbidden_tools": []
+}
+```
+
+该次实际已接受计划：
+
+```json
+{
+  "intent_category": "CHITCHAT",
+  "primary_action": null,
+  "planner_mode": "native",
+  "summary": "用户仅作寒暄告别，无业务诉求，无需调用工具。",
+  "subtasks": []
+}
+```
+
+## 7. rp_ff2ea6af7e47
+
+- 问题：先查订单 ORD-A001 的支付状态，然后告诉我通用开票规则。
+- 分类/范围：deep_sequential / current_regression；通过 0/3。
+- 预期通道：Deep-Path；实际三次：Deep-Path、Deep-Path、Deep-Path
+- 首要阻断点：真实的先后依赖缺失 3次
+- 第1次失败项：required_dependency
+
+预期目标与关系：
+
+```json
+{
+  "required_goals": [
+    {
+      "goal_id": "order",
+      "any_of": [
+        {
+          "tool": "query_orders",
+          "arguments": {
+            "order_id": "ORD-A001"
+          }
+        }
+      ],
+      "allow_shared_node": false
+    },
+    {
+      "goal_id": "policy",
+      "any_of": [
+        {
+          "tool": "knowledge_retriever",
+          "arguments": {},
+          "text_any": [
+            "发票",
+            "开票"
+          ]
+        }
+      ],
+      "allow_shared_node": true
+    }
+  ],
+  "must_precede": [
+    [
+      "order",
+      "policy"
+    ]
+  ],
+  "must_be_independent": [],
+  "conditions": [],
+  "forbidden_tools": []
+}
+```
+
+该次实际已接受计划：
+
+```json
+{
+  "intent_category": "COMPOSITE_TASK",
+  "primary_action": "query_orders",
+  "planner_mode": "native",
+  "summary": "查询订单 ORD-A001 的订单详情（含支付状态），并检索通用开票规则知识。",
+  "subtasks": [
+    {
+      "step_id": 1,
+      "tool_name": "query_orders",
+      "task_type": "READ_TOOL",
+      "arguments": {
+        "order_id": "ORD-A001"
+      },
+      "depends_on": [],
+      "description": "查询订单 ORD-A001 的详情与支付状态"
+    },
+    {
+      "step_id": 2,
+      "tool_name": "knowledge_retriever",
+      "task_type": "KNOWLEDGE_QA",
+      "arguments": {
+        "query": "通用开票规则"
+      },
+      "depends_on": [],
+      "description": "检索通用开票规则政策原文"
+    }
+  ]
+}
+```
+
+## 8. rp_f3c9a0bcc326
+
+- 问题：分别查退货政策和开票规则，这两项知识查询互不依赖，最后汇总。
+- 分类/范围：deep_parallel / current_regression；通过 0/3。
+- 预期通道：Deep-Path；实际三次：Fast-Path、Fast-Path、Fast-Path
+- 首要阻断点：路由先发生错误 3次
+- 第1次失败项：route_mismatch；planner_call_contract；missing_or_wrong_arguments:returns,invoices；false_or_unverifiable_dependency；unmatched_extra_task
+
+预期目标与关系：
+
+```json
+{
+  "required_goals": [
+    {
+      "goal_id": "returns",
+      "any_of": [
+        {
+          "tool": "knowledge_retriever",
+          "arguments": {},
+          "text_any": [
+            "退货",
+            "退款"
+          ]
+        }
+      ],
+      "allow_shared_node": true
+    },
+    {
+      "goal_id": "invoices",
+      "any_of": [
+        {
+          "tool": "knowledge_retriever",
+          "arguments": {},
+          "text_any": [
+            "开票",
+            "发票"
+          ]
+        }
+      ],
+      "allow_shared_node": true
+    }
+  ],
+  "must_precede": [],
+  "must_be_independent": [
+    [
+      "returns",
+      "invoices"
+    ]
+  ],
+  "conditions": [],
+  "forbidden_tools": []
+}
+```
+
+该次实际已接受计划：
+
+```json
+{
+  "intent_category": "KNOWLEDGE_QA",
+  "primary_action": "knowledge_retriever",
+  "planner_mode": "fast",
+  "summary": "查询官方知识库",
+  "subtasks": [
+    {
+      "step_id": 1,
+      "tool_name": "knowledge_retriever",
+      "task_type": "KNOWLEDGE_QA",
+      "arguments": {},
+      "depends_on": [],
+      "description": "查询官方知识库"
+    }
+  ]
+}
+```
+
+## 9. rp_c210c3533504
+
+- 问题：先查订单 ORD-A001，状态是 PAID 才开发票，抬头是星海科技有限公司；未支付则取消订单。
+- 分类/范围：deep_conditional / target_capability；通过 0/3。
+- 预期通道：Deep-Path；实际三次：Deep-Path、Deep-Path、Deep-Path
+- 首要阻断点：计划缺少结构化条件 3次
+- 第1次失败项：missing_or_wrong_structured_condition
+
+预期目标与关系：
+
+```json
+{
+  "required_goals": [
+    {
+      "goal_id": "order",
+      "any_of": [
+        {
+          "tool": "query_orders",
+          "arguments": {
+            "order_id": "ORD-A001"
+          }
+        }
+      ],
+      "allow_shared_node": false
+    },
+    {
+      "goal_id": "invoice",
+      "any_of": [
+        {
+          "tool": "apply_invoice",
+          "arguments": {
+            "invoice_title": "星海科技有限公司",
+            "order_id": "ORD-A001"
+          }
+        }
+      ],
+      "allow_shared_node": false
+    },
+    {
+      "goal_id": "cancel",
+      "any_of": [
+        {
+          "tool": "cancel_unpaid_order",
+          "arguments": {
+            "order_id": "ORD-A001"
+          }
+        }
+      ],
+      "allow_shared_node": false
+    }
+  ],
+  "must_precede": [
+    [
+      "order",
+      "invoice"
+    ],
+    [
+      "order",
+      "cancel"
+    ]
+  ],
+  "must_be_independent": [],
+  "conditions": [
+    {
+      "target_goal": "invoice",
+      "source_goal": "order",
+      "field": "status",
+      "operator": "eq",
+      "value": "PAID"
+    },
+    {
+      "target_goal": "cancel",
+      "source_goal": "order",
+      "field": "status",
+      "operator": "eq",
+      "value": "UNPAID"
+    }
+  ],
+  "forbidden_tools": []
+}
+```
+
+该次实际已接受计划：
+
+```json
+{
+  "intent_category": "COMPOSITE_TASK",
+  "primary_action": "conditional_invoice_or_cancel",
+  "planner_mode": "native",
+  "summary": "先查询订单 ORD-A001 状态；若为 PAID 则按抬头“星海科技有限公司”开具发票，若未支付则取消该订单。两个写操作互斥，均依赖查询结果。",
+  "subtasks": [
+    {
+      "step_id": 1,
+      "tool_name": "query_orders",
+      "task_type": "READ_TOOL",
+      "arguments": {
+        "order_id": "ORD-A001"
+      },
+      "depends_on": [],
+      "description": "查询订单 ORD-A001 的详情与支付状态"
+    },
+    {
+      "step_id": 2,
+      "tool_name": "apply_invoice",
+      "task_type": "WRITE_TOOL",
+      "arguments": {
+        "order_id": "ORD-A001",
+        "invoice_title": "星海科技有限公司"
+      },
+      "depends_on": [
+        1
+      ],
+      "description": "若订单 ORD-A001 状态为 PAID，则以抬头“星海科技有限公司”开具发票（税号、邮箱未提供，留空待确认）"
+    },
+    {
+      "step_id": 3,
+      "tool_name": "cancel_unpaid_order",
+      "task_type": "WRITE_TOOL",
+      "arguments": {
+        "order_id": "ORD-A001"
+      },
+      "depends_on": [
+        1
+      ],
+      "description": "若订单 ORD-A001 未支付，则取消该订单（取消原因未提供，留空）"
+    }
+  ]
+}
+```
+
+## 10. rp_bcabb5021055
+
+- 问题：先查订单 ORD-A001 的退货资格，允许退货才申请退款，原因是拍错了；不允许就只解释售后政策。
+- 分类/范围：deep_conditional / target_capability；通过 0/3。
+- 预期通道：Deep-Path；实际三次：Fast-Path、Fast-Path、Fast-Path
+- 首要阻断点：路由先发生错误 3次
+- 第1次失败项：route_mismatch；planner_call_contract；missing_or_wrong_arguments:order,refund,policy；required_dependency；missing_or_wrong_structured_condition；unmatched_extra_task
+
+预期目标与关系：
+
+```json
+{
+  "required_goals": [
+    {
+      "goal_id": "order",
+      "any_of": [
+        {
+          "tool": "query_orders",
+          "arguments": {
+            "order_id": "ORD-A001"
+          }
+        }
+      ],
+      "allow_shared_node": false
+    },
+    {
+      "goal_id": "refund",
+      "any_of": [
+        {
+          "tool": "apply_refund",
+          "arguments": {
+            "refund_reason": "拍错了",
+            "order_id": "ORD-A001"
+          }
+        }
+      ],
+      "allow_shared_node": false
+    },
+    {
+      "goal_id": "policy",
+      "any_of": [
+        {
+          "tool": "knowledge_retriever",
+          "arguments": {},
+          "text_any": [
+            "退货",
+            "退款",
+            "售后"
+          ]
+        }
+      ],
+      "allow_shared_node": true
+    }
+  ],
+  "must_precede": [
+    [
+      "order",
+      "refund"
+    ],
+    [
+      "order",
+      "policy"
+    ]
+  ],
+  "must_be_independent": [],
+  "conditions": [
+    {
+      "target_goal": "refund",
+      "source_goal": "order",
+      "field": "can_refund",
+      "operator": "eq",
+      "value": true
+    },
+    {
+      "target_goal": "policy",
+      "source_goal": "order",
+      "field": "can_refund",
+      "operator": "eq",
+      "value": false
+    }
+  ],
+  "forbidden_tools": []
+}
+```
+
+该次实际已接受计划：
+
+```json
+{
+  "intent_category": "KNOWLEDGE_QA",
+  "primary_action": "knowledge_retriever",
+  "planner_mode": "fast",
+  "summary": "查询官方知识库",
+  "subtasks": [
+    {
+      "step_id": 1,
+      "tool_name": "knowledge_retriever",
+      "task_type": "KNOWLEDGE_QA",
+      "arguments": {},
+      "depends_on": [],
+      "description": "查询官方知识库"
+    }
+  ]
+}
+```
+
+## 11. rp_6b4408ead5b3
+
+- 问题：不要转人工，先查订单 ORD-A001 物流，再开票，抬头是星海科技有限公司。
+- 分类/范围：deep_mixed / current_regression；通过 0/3。
+- 预期通道：Deep-Path；实际三次：Fast-Path、Fast-Path、Fast-Path
+- 首要阻断点：路由先发生错误 3次
+- 第1次失败项：route_mismatch；planner_call_contract；dag:missing_dag；missing_or_wrong_arguments:logistics,invoice；required_dependency；forbidden_action
+
+预期目标与关系：
+
+```json
+{
+  "required_goals": [
+    {
+      "goal_id": "logistics",
+      "any_of": [
+        {
+          "tool": "query_logistics",
+          "arguments": {
+            "order_id": "ORD-A001"
+          }
+        },
+        {
+          "tool": "query_orders",
+          "arguments": {
+            "order_id": "ORD-A001"
+          }
+        }
+      ],
+      "allow_shared_node": false
+    },
+    {
+      "goal_id": "invoice",
+      "any_of": [
+        {
+          "tool": "apply_invoice",
+          "arguments": {
+            "invoice_title": "星海科技有限公司",
+            "order_id": "ORD-A001"
+          }
+        }
+      ],
+      "allow_shared_node": false
+    }
+  ],
+  "must_precede": [
+    [
+      "logistics",
+      "invoice"
+    ]
+  ],
+  "must_be_independent": [],
+  "conditions": [],
+  "forbidden_tools": [
+    "transfer_to_human"
+  ]
+}
+```
+
+该次实际已接受计划：
+
+```json
+{
+  "intent_category": "HUMAN_ESCALATION",
+  "primary_action": "TRANSFER_TO_HUMAN",
+  "planner_mode": "fast",
+  "summary": "用户请求人工接管",
+  "subtasks": []
+}
+```
+
+## 12. rp_9e979d23627a
+
+- 问题：按照退款规则，先查订单 ORD-A001，再帮我申请退款，原因是拍错了。
+- 分类/范围：deep_mixed / current_regression；通过 0/3。
+- 预期通道：Deep-Path；实际三次：Fast-Path、Fast-Path、Fast-Path
+- 首要阻断点：路由先发生错误 3次
+- 第1次失败项：route_mismatch；planner_call_contract；missing_or_wrong_arguments:order,refund；required_dependency；unmatched_extra_task
+
+预期目标与关系：
+
+```json
+{
+  "required_goals": [
+    {
+      "goal_id": "order",
+      "any_of": [
+        {
+          "tool": "query_orders",
+          "arguments": {
+            "order_id": "ORD-A001"
+          }
+        }
+      ],
+      "allow_shared_node": false
+    },
+    {
+      "goal_id": "refund",
+      "any_of": [
+        {
+          "tool": "apply_refund",
+          "arguments": {
+            "refund_reason": "拍错了",
+            "order_id": "ORD-A001"
+          }
+        }
+      ],
+      "allow_shared_node": false
+    }
+  ],
+  "must_precede": [
+    [
+      "order",
+      "refund"
+    ]
+  ],
+  "must_be_independent": [],
+  "conditions": [],
+  "forbidden_tools": []
+}
+```
+
+该次实际已接受计划：
+
+```json
+{
+  "intent_category": "KNOWLEDGE_QA",
+  "primary_action": "knowledge_retriever",
+  "planner_mode": "fast",
+  "summary": "查询官方知识库",
+  "subtasks": [
+    {
+      "step_id": 1,
+      "tool_name": "knowledge_retriever",
+      "task_type": "KNOWLEDGE_QA",
+      "arguments": {},
+      "depends_on": [],
+      "description": "查询官方知识库"
+    }
+  ]
+}
+```
+
+## 13. rp_e3c6e98a6de1
+
+- 问题：分别查询订单 ORD-A001 的详情、订单 ORD-B002 的退款进度以及售后政策，三个结果一起给我。
+- 分类/范围：deep_parallel / current_regression；通过 0/3。
+- 预期通道：Deep-Path；实际三次：Fast-Path、Fast-Path、Fast-Path
+- 首要阻断点：路由先发生错误 3次
+- 第1次失败项：route_mismatch；planner_call_contract；missing_or_wrong_arguments:order,refund_b,policy；false_or_unverifiable_dependency；unmatched_extra_task
+
+预期目标与关系：
+
+```json
+{
+  "required_goals": [
+    {
+      "goal_id": "order",
+      "any_of": [
+        {
+          "tool": "query_orders",
+          "arguments": {
+            "order_id": "ORD-A001"
+          }
+        }
+      ],
+      "allow_shared_node": false
+    },
+    {
+      "goal_id": "refund_b",
+      "any_of": [
+        {
+          "tool": "query_refund_status",
+          "arguments": {
+            "order_id": "ORD-B002"
+          }
+        }
+      ],
+      "allow_shared_node": false
+    },
+    {
+      "goal_id": "policy",
+      "any_of": [
+        {
+          "tool": "knowledge_retriever",
+          "arguments": {},
+          "text_any": [
+            "售后",
+            "退货",
+            "退款"
+          ]
+        }
+      ],
+      "allow_shared_node": true
+    }
+  ],
+  "must_precede": [],
+  "must_be_independent": [
+    [
+      "order",
+      "refund_b"
+    ],
+    [
+      "order",
+      "policy"
+    ],
+    [
+      "refund_b",
+      "policy"
+    ]
+  ],
+  "conditions": [],
+  "forbidden_tools": []
+}
+```
+
+该次实际已接受计划：
+
+```json
+{
+  "intent_category": "KNOWLEDGE_QA",
+  "primary_action": "knowledge_retriever",
+  "planner_mode": "fast",
+  "summary": "查询官方知识库",
+  "subtasks": [
+    {
+      "step_id": 1,
+      "tool_name": "knowledge_retriever",
+      "task_type": "KNOWLEDGE_QA",
+      "arguments": {},
+      "depends_on": [],
+      "description": "查询官方知识库"
+    }
+  ]
+}
+```
+
+## 14. rp_6c2c1044c92b
+
+- 问题：先查商品 SKU-100 的库存，有库存就创建一笔订单，没有库存就登记到货提醒。
+- 分类/范围：deep_conditional / target_capability；通过 0/3。
+- 预期通道：Deep-Path；实际三次：Deep-Path、Deep-Path、Deep-Path
+- 首要阻断点：模型输出被契约校验拒绝 3次
+- 第1次失败项：inference_error:ValidationError；dag:missing_dag；missing_or_wrong_arguments:stock,buy,remind；required_dependency；missing_or_wrong_structured_condition
+
+预期目标与关系：
+
+```json
+{
+  "required_goals": [
+    {
+      "goal_id": "stock",
+      "any_of": [
+        {
+          "tool": "query_inventory",
+          "arguments": {
+            "sku": "SKU-100"
+          }
+        }
+      ],
+      "allow_shared_node": false
+    },
+    {
+      "goal_id": "buy",
+      "any_of": [
+        {
+          "tool": "create_order",
+          "arguments": {
+            "sku": "SKU-100"
+          }
+        }
+      ],
+      "allow_shared_node": false
+    },
+    {
+      "goal_id": "remind",
+      "any_of": [
+        {
+          "tool": "subscribe_stock_alert",
+          "arguments": {
+            "sku": "SKU-100"
+          }
+        }
+      ],
+      "allow_shared_node": false
+    }
+  ],
+  "must_precede": [
+    [
+      "stock",
+      "buy"
+    ],
+    [
+      "stock",
+      "remind"
+    ]
+  ],
+  "must_be_independent": [],
+  "conditions": [
+    {
+      "target_goal": "buy",
+      "source_goal": "stock",
+      "field": "available_quantity",
+      "operator": "gt",
+      "value": 0
+    },
+    {
+      "target_goal": "remind",
+      "source_goal": "stock",
+      "field": "available_quantity",
+      "operator": "eq",
+      "value": 0
+    }
+  ],
+  "forbidden_tools": []
+}
+```
+
+该次实际已接受计划：
+
+```json
+null
+```
+
+该次被校验器拒绝的模型原始计划：
+
+```json
+[
+  {
+    "intent_category": "TASK_EXECUTION",
+    "primary_action": "查询商品库存",
+    "planner_mode": "native",
+    "summary": "用户请求查询 SKU-100 库存，并根据结果创建订单或登记到货提醒。当前工具注册表中没有商品库存查询、创建订单、到货提醒登记相关工具，无法规划可执行步骤，需向用户说明能力限制。",
+    "subtasks": [
+      {
+        "step_id": 1,
+        "tool_name": "knowledge_retriever",
+        "task_type": "CLARIFICATION",
+        "arguments": {
+          "query": "商品库存查询与到货提醒登记服务是否支持"
+        },
+        "depends_on": [],
+        "description": "说明当前系统不支持商品库存查询、下单创建及到货提醒登记，请用户确认是否改为查询本人订单/物流等可用服务"
+      }
+    ]
+  }
+]
+```
+
+## 15. rp_6950a7022ad4
+
+- 问题：接个真人来聊吧
+- 分类/范围：fast_handoff / current_regression；通过 0/3。
+- 预期通道：Fast-Path；实际三次：Deep-Path、Deep-Path、Deep-Path
+- 首要阻断点：路由先发生错误 3次
+- 第1次失败项：route_mismatch；planner_call_contract
+
+预期目标与关系：
+
+```json
+{
+  "required_goals": [],
+  "must_precede": [],
+  "must_be_independent": [],
+  "conditions": [],
+  "forbidden_tools": []
+}
+```
+
+该次实际已接受计划：
+
+```json
+{
+  "intent_category": "HUMAN_ESCALATION",
+  "primary_action": "转接人工客服",
+  "planner_mode": "native",
+  "summary": "用户要求转接真人客服，无需调用业务工具，直接转人工处理。",
+  "subtasks": []
+}
+```
+
+## 16. rp_9a00cfc2b411
+
+- 问题：周末客服也上班吗？
+- 分类/范围：fast_knowledge / current_regression；通过 0/3。
+- 预期通道：Fast-Path；实际三次：Deep-Path、Deep-Path、Deep-Path
+- 首要阻断点：路由先发生错误 3次
+- 第1次失败项：route_mismatch；planner_call_contract
+
+预期目标与关系：
+
+```json
+{
+  "required_goals": [],
+  "must_precede": [],
+  "must_be_independent": [],
+  "conditions": [],
+  "forbidden_tools": []
+}
+```
+
+该次实际已接受计划：
+
+```json
+{
+  "intent_category": "KNOWLEDGE_QA",
+  "primary_action": "knowledge_retriever",
+  "planner_mode": "native",
+  "summary": "用户咨询客服周末服务时间，属政策咨询，检索知识库回答，不涉及任何写操作。",
+  "subtasks": [
+    {
+      "step_id": 1,
+      "tool_name": "knowledge_retriever",
+      "task_type": "KNOWLEDGE_QA",
+      "arguments": {
+        "query": "客服服务时间 周末是否上班 人工客服工作时间"
+      },
+      "depends_on": [],
+      "description": "检索客服服务时间政策，确认周末是否提供人工客服服务"
+    }
+  ]
+}
+```
+
+## 17. rp_06c9c493ee64
+
+- 问题：发票可以开公司抬头吗？
+- 分类/范围：fast_knowledge / current_regression；通过 0/3。
+- 预期通道：Fast-Path；实际三次：Deep-Path、Deep-Path、Deep-Path
+- 首要阻断点：路由先发生错误 3次
+- 第1次失败项：route_mismatch；planner_call_contract
+
+预期目标与关系：
+
+```json
+{
+  "required_goals": [],
+  "must_precede": [],
+  "must_be_independent": [],
+  "conditions": [],
+  "forbidden_tools": []
+}
+```
+
+该次实际已接受计划：
+
+```json
+{
+  "intent_category": "KNOWLEDGE_QA",
+  "primary_action": "knowledge_retriever",
+  "planner_mode": "native",
+  "summary": "用户咨询发票能否开具公司抬头，属于政策咨询，仅检索知识库原文作答，不规划任何开票写操作。",
+  "subtasks": [
+    {
+      "step_id": 1,
+      "tool_name": "knowledge_retriever",
+      "task_type": "KNOWLEDGE_QA",
+      "arguments": {
+        "query": "发票是否可以开具公司（企业）抬头，需要提供哪些信息"
+      },
+      "depends_on": [],
+      "description": "检索发票开具政策，确认是否支持公司抬头（企业抬头）开票及所需信息"
+    }
+  ]
+}
+```
+
+## 18. rp_87854eb42eda
+
+- 问题：查下我昨天买的服务器订单物流，顺便开专票，如果不想要了政策是怎样
+- 分类/范围：deep_mixed / target_capability；通过 0/3。
+- 预期通道：Deep-Path；实际三次：Deep-Path、Deep-Path、Deep-Path
+- 首要阻断点：模型输出被契约校验拒绝 3次
+- 第1次失败项：inference_error:ValidationError；dag:missing_dag；missing_or_wrong_arguments:logistics,invoice,policy
+
+预期目标与关系：
+
+```json
+{
+  "required_goals": [
+    {
+      "goal_id": "logistics",
+      "any_of": [
+        {
+          "tool": "query_logistics",
+          "arguments": {
+            "order_id": "ORD-A001"
+          }
+        },
+        {
+          "tool": "query_orders",
+          "arguments": {
+            "order_id": "ORD-A001"
+          }
+        }
+      ],
+      "allow_shared_node": false
+    },
+    {
+      "goal_id": "invoice",
+      "any_of": [
+        {
+          "tool": "apply_invoice",
+          "arguments": {
+            "invoice_type": "special",
+            "order_id": "ORD-A001"
+          }
+        }
+      ],
+      "allow_shared_node": false
+    },
+    {
+      "goal_id": "policy",
+      "any_of": [
+        {
+          "tool": "knowledge_retriever",
+          "arguments": {},
+          "text_any": [
+            "退货",
+            "退款",
+            "售后"
+          ]
+        }
+      ],
+      "allow_shared_node": true
+    }
+  ],
+  "must_precede": [],
+  "must_be_independent": [],
+  "conditions": [],
+  "forbidden_tools": [
+    "apply_refund",
+    "cancel_unpaid_order"
+  ]
+}
+```
+
+该次实际已接受计划：
+
+```json
+null
+```
+
+该次被校验器拒绝的模型原始计划：
+
+```json
+[
+  {
+    "intent_category": "COMPOSITE_TASK",
+    "primary_action": "query_logistics",
+    "planner_mode": null,
+    "summary": "查询昨日服务器订单（ORD-A001）的物流轨迹；为该订单申请增值税专用发票（抬头、税号、邮箱缺失，需追问）；检索退货/退款政策原文。",
+    "subtasks": [
+      {
+        "step_id": 1,
+        "tool_name": "query_logistics",
+        "task_type": "READ_TOOL",
+        "arguments": {
+          "order_id": "ORD-A001"
+        },
+        "depends_on": [],
+        "description": "查询订单 ORD-A001（2026-11-06 购买的服务器）的承运商、运单号及物流轨迹"
+      },
+      {
+        "step_id": 2,
+        "tool_name": "knowledge_retriever",
+        "task_type": "KNOWLEDGE_QA",
+        "arguments": {
+          "query": "服务器商品退货退款政策 七天无理由 退货条件"
+        },
+        "depends_on": [],
+        "description": "检索服务器类商品退货/退款（不想要了）相关政策原文"
+      },
+      {
+        "step_id": 3,
+        "tool_name": "apply_invoice",
+        "task_type": "CLARIFICATION",
+        "arguments": {
+          "order_id": "ORD-A001"
+        },
+        "depends_on": [],
+        "description": "申请增值税专用发票需用户提供发票抬头、纳税人识别号及接收邮箱，当前缺失，需追问确认"
+      }
+    ]
+  }
+]
+```
+
+## 19. rp_f3ea55ef81d9
+
+- 问题：订单 ORD-A001 的物流、订单 ORD-B002 的退款进度和通用退货政策，三件事分别查询后汇总。
+- 分类/范围：deep_parallel / current_regression；通过 0/3。
+- 预期通道：Deep-Path；实际三次：Fast-Path、Fast-Path、Fast-Path
+- 首要阻断点：路由先发生错误 3次
+- 第1次失败项：route_mismatch；planner_call_contract；missing_or_wrong_arguments:logistics,refund_b,policy；false_or_unverifiable_dependency；unmatched_extra_task
+
+预期目标与关系：
+
+```json
+{
+  "required_goals": [
+    {
+      "goal_id": "logistics",
+      "any_of": [
+        {
+          "tool": "query_logistics",
+          "arguments": {
+            "order_id": "ORD-A001"
+          }
+        },
+        {
+          "tool": "query_orders",
+          "arguments": {
+            "order_id": "ORD-A001"
+          }
+        }
+      ],
+      "allow_shared_node": false
+    },
+    {
+      "goal_id": "refund_b",
+      "any_of": [
+        {
+          "tool": "query_refund_status",
+          "arguments": {
+            "order_id": "ORD-B002"
+          }
+        }
+      ],
+      "allow_shared_node": false
+    },
+    {
+      "goal_id": "policy",
+      "any_of": [
+        {
+          "tool": "knowledge_retriever",
+          "arguments": {},
+          "text_any": [
+            "退货",
+            "退款",
+            "售后"
+          ]
+        }
+      ],
+      "allow_shared_node": true
+    }
+  ],
+  "must_precede": [],
+  "must_be_independent": [
+    [
+      "logistics",
+      "refund_b"
+    ],
+    [
+      "logistics",
+      "policy"
+    ],
+    [
+      "refund_b",
+      "policy"
+    ]
+  ],
+  "conditions": [],
+  "forbidden_tools": []
+}
+```
+
+该次实际已接受计划：
+
+```json
+{
+  "intent_category": "KNOWLEDGE_QA",
+  "primary_action": "knowledge_retriever",
+  "planner_mode": "fast",
+  "summary": "查询官方知识库",
+  "subtasks": [
+    {
+      "step_id": 1,
+      "tool_name": "knowledge_retriever",
+      "task_type": "KNOWLEDGE_QA",
+      "arguments": {},
+      "depends_on": [],
+      "description": "查询官方知识库"
+    }
+  ]
+}
+```
+
+## 20. rp_d4411355b4db
+
+- 问题：服务器的保修期通常是多久？
+- 分类/范围：fast_knowledge / current_regression；通过 0/3。
+- 预期通道：Fast-Path；实际三次：Deep-Path、Deep-Path、Deep-Path
+- 首要阻断点：路由先发生错误 3次
+- 第1次失败项：route_mismatch；planner_call_contract
+
+预期目标与关系：
+
+```json
+{
+  "required_goals": [],
+  "must_precede": [],
+  "must_be_independent": [],
+  "conditions": [],
+  "forbidden_tools": []
+}
+```
+
+该次实际已接受计划：
+
+```json
+{
+  "intent_category": "KNOWLEDGE_QA",
+  "primary_action": "knowledge_retriever",
+  "planner_mode": "native",
+  "summary": "用户咨询服务器保修期政策，属于知识问答，检索产品与服务政策原文作答。",
+  "subtasks": [
+    {
+      "step_id": 1,
+      "tool_name": "knowledge_retriever",
+      "task_type": "KNOWLEDGE_QA",
+      "arguments": {
+        "query": "服务器保修期通常是多久"
+      },
+      "depends_on": [],
+      "description": "检索服务器保修期相关政策原文"
+    }
+  ]
+}
+```
+
+## 21. rp_84aca05e3f8b
+
+- 问题：会员积分有效期有多久？
+- 分类/范围：fast_knowledge / current_regression；通过 0/3。
+- 预期通道：Fast-Path；实际三次：Deep-Path、Deep-Path、Deep-Path
+- 首要阻断点：路由先发生错误 3次
+- 第1次失败项：route_mismatch；planner_call_contract
+
+预期目标与关系：
+
+```json
+{
+  "required_goals": [],
+  "must_precede": [],
+  "must_be_independent": [],
+  "conditions": [],
+  "forbidden_tools": []
+}
+```
+
+该次实际已接受计划：
+
+```json
+{
+  "intent_category": "KNOWLEDGE_QA",
+  "primary_action": "knowledge_retriever",
+  "planner_mode": "native",
+  "summary": "用户咨询会员积分有效期政策，检索知识库原文作答。",
+  "subtasks": [
+    {
+      "step_id": 1,
+      "tool_name": "knowledge_retriever",
+      "task_type": "KNOWLEDGE_QA",
+      "arguments": {
+        "query": "会员积分有效期"
+      },
+      "depends_on": [],
+      "description": "检索会员积分有效期相关政策原文"
+    }
+  ]
+}
+```
+
+## 22. rp_fca01244e52a
+
+- 问题：早上好，请问在吗？
+- 分类/范围：fast_greeting / current_regression；通过 0/3。
+- 预期通道：Fast-Path；实际三次：Deep-Path、Deep-Path、Deep-Path
+- 首要阻断点：路由先发生错误 3次
+- 第1次失败项：route_mismatch；planner_call_contract
+
+预期目标与关系：
+
+```json
+{
+  "required_goals": [],
+  "must_precede": [],
+  "must_be_independent": [],
+  "conditions": [],
+  "forbidden_tools": []
+}
+```
+
+该次实际已接受计划：
+
+```json
+{
+  "intent_category": "CHITCHAT",
+  "primary_action": null,
+  "planner_mode": "native",
+  "summary": "用户仅打招呼确认在线，无具体业务请求，无需调用工具。",
+  "subtasks": []
+}
+```
+
+## 23. rp_f58cee566845
+
+- 问题：帮我查询这个设备的报修记录，生成工单，同时通知运维，还要告诉我保修到期时间
+- 分类/范围：deep_mixed / target_capability；通过 0/3。
+- 预期通道：Deep-Path；实际三次：Deep-Path、Deep-Path、Deep-Path
+- 首要阻断点：模型输出被契约校验拒绝 3次
+- 第1次失败项：inference_error:ValidationError；dag:missing_dag；missing_or_wrong_arguments:records,ticket,notify,warranty；required_dependency；false_or_unverifiable_dependency
+
+预期目标与关系：
+
+```json
+{
+  "required_goals": [
+    {
+      "goal_id": "records",
+      "any_of": [
+        {
+          "tool": "query_repair_records",
+          "arguments": {
+            "device_id": "DEV-100"
+          }
+        }
+      ],
+      "allow_shared_node": false
+    },
+    {
+      "goal_id": "ticket",
+      "any_of": [
+        {
+          "tool": "create_repair_ticket",
+          "arguments": {}
+        }
+      ],
+      "allow_shared_node": false
+    },
+    {
+      "goal_id": "notify",
+      "any_of": [
+        {
+          "tool": "notify_operations",
+          "arguments": {}
+        }
+      ],
+      "allow_shared_node": false
+    },
+    {
+      "goal_id": "warranty",
+      "any_of": [
+        {
+          "tool": "query_warranty",
+          "arguments": {
+            "device_id": "DEV-100"
+          }
+        }
+      ],
+      "allow_shared_node": false
+    }
+  ],
+  "must_precede": [
+    [
+      "records",
+      "ticket"
+    ],
+    [
+      "ticket",
+      "notify"
+    ]
+  ],
+  "must_be_independent": [
+    [
+      "warranty",
+      "records"
+    ]
+  ],
+  "conditions": [],
+  "forbidden_tools": []
+}
+```
+
+该次实际已接受计划：
+
+```json
+null
+```
+
+该次被校验器拒绝的模型原始计划：
+
+```json
+[
+  {
+    "intent_category": "COMPOSITE_TASK",
+    "primary_action": "查询设备报修记录并生成工单",
+    "planner_mode": null,
+    "summary": "用户请求涉及设备（DEV-100）的报修记录查询、工单创建、运维通知与保修到期时间查询。当前可用工具仅覆盖订单、物流、退款、发票、地址、取消订单与政策知识检索，缺少设备报修记录查询、工单创建、运维通知等能力，需向用户说明并追问。",
+    "subtasks": [
+      {
+        "step_id": 1,
+        "tool_name": "knowledge_retriever",
+        "task_type": "KNOWLEDGE_QA",
+        "arguments": {
+          "query": "设备保修期限如何查询、保修到期时间判定规则，以及设备报修工单创建与运维通知流程"
+        },
+        "depends_on": [],
+        "description": "检索设备保修期限与报修工单相关政策，确认保修到期时间的判定规则及报修流程"
+      },
+      {
+        "step_id": 2,
+        "tool_name": "knowledge_retriever",
+        "task_type": "CLARIFICATION",
+        "arguments": {
+          "query": "设备 DEV-100 报修记录查询、工单创建与运维通知所需信息确认"
+        },
+        "depends_on": [
+          1
+        ],
+        "description": "向用户说明当前系统不支持设备报修记录查询、工单创建与运维通知操作，并追问设备型号、购买订单号或合同编号等必要信息以便进一步处理"
+      }
+    ]
+  }
+]
+```
+
+## 24. rp_595f708ecdb2
+
+- 问题：如果 SKU-100 有库存就下单，没有就登记提醒；使用刚才已经核实的库存结果。
+- 分类/范围：deep_conditional / target_capability；通过 0/3。
+- 预期通道：Deep-Path；实际三次：Deep-Path、Deep-Path、Deep-Path
+- 首要阻断点：模型输出被契约校验拒绝 1次；缺少业务工具，返回空计划 2次
+- 第1次失败项：inference_error:ValidationError；dag:missing_dag；missing_or_wrong_arguments:buy
+
+预期目标与关系：
+
+```json
+{
+  "required_goals": [
+    {
+      "goal_id": "buy",
+      "any_of": [
+        {
+          "tool": "create_order",
+          "arguments": {
+            "sku": "SKU-100"
+          }
+        }
+      ],
+      "allow_shared_node": false
+    }
+  ],
+  "must_precede": [],
+  "must_be_independent": [],
+  "conditions": [],
+  "forbidden_tools": [
+    "subscribe_stock_alert"
+  ]
+}
+```
+
+该次实际已接受计划：
+
+```json
+null
+```
+
+该次被校验器拒绝的模型原始计划：
+
+```json
+[
+  {
+    "intent_category": "TASK_EXECUTION",
+    "primary_action": "conditional_order_or_reminder",
+    "planner_mode": "native",
+    "summary": "用户请求为条件式操作：若 SKU-100 有库存则下单，否则登记到货提醒。已核实的库存结果显示 available_quantity=5（有库存），但当前工具注册表中没有下单/创建订单工具，也没有到货提醒登记工具，因此无法规划任何写操作，需向用户说明并追问。",
+    "subtasks": [
+      {
+        "step_id": 1,
+        "tool_name": "query_orders",
+        "task_type": "CLARIFICATION",
+        "arguments": {},
+        "depends_on": [],
+        "description": "说明当前可用工具中不存在下单（创建订单）与到货提醒登记能力，无法执行该条件式写操作；请用户确认下单渠道或提供可用的下单方式，并补充商品数量、收货地址、联系方式等信息。"
+      }
+    ]
+  }
+]
+```
+
+## 25. rp_036f92dc179e
+
+- 问题：先查余额，申请退款，再查看退款到账周期
+- 分类/范围：deep_mixed / target_capability；通过 0/3。
+- 预期通道：Deep-Path；实际三次：Deep-Path、Deep-Path、Deep-Path
+- 首要阻断点：模型输出被契约校验拒绝 3次
+- 第1次失败项：inference_error:ValidationError；dag:missing_dag；missing_or_wrong_arguments:balance,refund,policy；required_dependency
+
+预期目标与关系：
+
+```json
+{
+  "required_goals": [
+    {
+      "goal_id": "balance",
+      "any_of": [
+        {
+          "tool": "query_balance",
+          "arguments": {}
+        }
+      ],
+      "allow_shared_node": false
+    },
+    {
+      "goal_id": "refund",
+      "any_of": [
+        {
+          "tool": "apply_refund",
+          "arguments": {}
+        }
+      ],
+      "allow_shared_node": false
+    },
+    {
+      "goal_id": "policy",
+      "any_of": [
+        {
+          "tool": "knowledge_retriever",
+          "arguments": {},
+          "text_any": [
+            "退款",
+            "到账"
+          ]
+        }
+      ],
+      "allow_shared_node": true
+    }
+  ],
+  "must_precede": [
+    [
+      "balance",
+      "refund"
+    ],
+    [
+      "refund",
+      "policy"
+    ]
+  ],
+  "must_be_independent": [],
+  "conditions": [],
+  "forbidden_tools": []
+}
+```
+
+该次实际已接受计划：
+
+```json
+null
+```
+
+该次被校验器拒绝的模型原始计划：
+
+```json
+[
+  {
+    "intent_category": "COMPOSITE_TASK",
+    "primary_action": "apply_refund",
+    "planner_mode": null,
+    "summary": "用户请求包含三部分：查询余额（当前工具集中无余额查询能力，需说明）、申请退款（缺少订单号与退款原因，需追问）、查询退款到账周期（政策类问题，可检索知识库）。",
+    "subtasks": [
+      {
+        "step_id": 1,
+        "tool_name": "query_orders",
+        "task_type": "CLARIFICATION",
+        "arguments": {},
+        "depends_on": [],
+        "description": "用户要求“查余额”，但当前工具集无账户余额查询能力；同时退款申请缺少订单号与退款原因。需向用户说明并追问：目标订单号、退款原因（及是否指定退款金额）。"
+      },
+      {
+        "step_id": 2,
+        "tool_name": "apply_refund",
+        "task_type": "WRITE_TOOL",
+        "arguments": {},
+        "depends_on": [
+          1
+        ],
+        "description": "在用户提供订单号与退款原因后，对该订单发起售后退款申请（高风险，需用户确认）。"
+      },
+      {
+        "step_id": 3,
+        "tool_name": "knowledge_retriever",
+        "task_type": "KNOWLEDGE_QA",
+        "arguments": {
+          "query": "退款到账周期是多久？退款审核通过后多久到账？"
+        },
+        "depends_on": [],
+        "description": "检索退款到账周期相关政策，说明退款审核通过后的预计到账时间。"
+      }
+    ]
+  }
+]
+```
+
+## 26. rp_761dd15fee3e
+
+- 问题：先查订单 ORD-A001 的状态，再开具发票，抬头是星海科技有限公司，之后解释开票政策。
+- 分类/范围：deep_sequential / current_regression；通过 0/3。
+- 预期通道：Deep-Path；实际三次：Fast-Path、Fast-Path、Fast-Path
+- 首要阻断点：路由先发生错误 3次
+- 第1次失败项：route_mismatch；planner_call_contract；missing_or_wrong_arguments:order,invoice,policy；required_dependency；unmatched_extra_task
+
+预期目标与关系：
+
+```json
+{
+  "required_goals": [
+    {
+      "goal_id": "order",
+      "any_of": [
+        {
+          "tool": "query_orders",
+          "arguments": {
+            "order_id": "ORD-A001"
+          }
+        }
+      ],
+      "allow_shared_node": false
+    },
+    {
+      "goal_id": "invoice",
+      "any_of": [
+        {
+          "tool": "apply_invoice",
+          "arguments": {
+            "invoice_title": "星海科技有限公司",
+            "order_id": "ORD-A001"
+          }
+        }
+      ],
+      "allow_shared_node": false
+    },
+    {
+      "goal_id": "policy",
+      "any_of": [
+        {
+          "tool": "knowledge_retriever",
+          "arguments": {},
+          "text_any": [
+            "发票",
+            "开票"
+          ]
+        }
+      ],
+      "allow_shared_node": true
+    }
+  ],
+  "must_precede": [
+    [
+      "order",
+      "invoice"
+    ],
+    [
+      "invoice",
+      "policy"
+    ]
+  ],
+  "must_be_independent": [],
+  "conditions": [],
+  "forbidden_tools": []
+}
+```
+
+该次实际已接受计划：
+
+```json
+{
+  "intent_category": "KNOWLEDGE_QA",
+  "primary_action": "knowledge_retriever",
+  "planner_mode": "fast",
+  "summary": "查询官方知识库",
+  "subtasks": [
+    {
+      "step_id": 1,
+      "tool_name": "knowledge_retriever",
+      "task_type": "KNOWLEDGE_QA",
+      "arguments": {},
+      "depends_on": [],
+      "description": "查询官方知识库"
+    }
+  ]
+}
+```
+
+## 27. rp_f5b650908342
+
+- 问题：先查我的可退余额，余额不少于100元就对订单 ORD-A001 申请100元退款，原因是拍错了，否则转人工核实。
+- 分类/范围：deep_conditional / target_capability；通过 0/3。
+- 预期通道：Deep-Path；实际三次：Fast-Path、Fast-Path、Fast-Path
+- 首要阻断点：路由先发生错误 3次
+- 第1次失败项：route_mismatch；planner_call_contract；dag:missing_dag；missing_or_wrong_arguments:balance,refund,handoff；required_dependency；missing_or_wrong_structured_condition
+
+预期目标与关系：
+
+```json
+{
+  "required_goals": [
+    {
+      "goal_id": "balance",
+      "any_of": [
+        {
+          "tool": "query_balance",
+          "arguments": {}
+        }
+      ],
+      "allow_shared_node": false
+    },
+    {
+      "goal_id": "refund",
+      "any_of": [
+        {
+          "tool": "apply_refund",
+          "arguments": {
+            "refund_reason": "拍错了",
+            "refund_amount": 100,
+            "order_id": "ORD-A001"
+          }
+        }
+      ],
+      "allow_shared_node": false
+    },
+    {
+      "goal_id": "handoff",
+      "any_of": [
+        {
+          "tool": "transfer_to_human",
+          "arguments": {}
+        }
+      ],
+      "allow_shared_node": false
+    }
+  ],
+  "must_precede": [
+    [
+      "balance",
+      "refund"
+    ],
+    [
+      "balance",
+      "handoff"
+    ]
+  ],
+  "must_be_independent": [],
+  "conditions": [
+    {
+      "target_goal": "refund",
+      "source_goal": "balance",
+      "field": "refundable_balance",
+      "operator": "gte",
+      "value": 100
+    }
+  ],
+  "forbidden_tools": []
+}
+```
+
+该次实际已接受计划：
+
+```json
+{
+  "intent_category": "HUMAN_ESCALATION",
+  "primary_action": "TRANSFER_TO_HUMAN",
+  "planner_mode": "fast",
+  "summary": "用户请求人工接管",
+  "subtasks": []
+}
+```
+
+## 28. rp_eb50ad3275c1
+
+- 问题：先查订单 ORD-A001 的状态，再把查询结果交给人工客服。
+- 分类/范围：deep_mixed / target_capability；通过 0/3。
+- 预期通道：Deep-Path；实际三次：Fast-Path、Fast-Path、Fast-Path
+- 首要阻断点：路由先发生错误 3次
+- 第1次失败项：route_mismatch；planner_call_contract；dag:missing_dag；missing_or_wrong_arguments:order,handoff；required_dependency
+
+预期目标与关系：
+
+```json
+{
+  "required_goals": [
+    {
+      "goal_id": "order",
+      "any_of": [
+        {
+          "tool": "query_orders",
+          "arguments": {
+            "order_id": "ORD-A001"
+          }
+        }
+      ],
+      "allow_shared_node": false
+    },
+    {
+      "goal_id": "handoff",
+      "any_of": [
+        {
+          "tool": "transfer_to_human",
+          "arguments": {}
+        }
+      ],
+      "allow_shared_node": false
+    }
+  ],
+  "must_precede": [
+    [
+      "order",
+      "handoff"
+    ]
+  ],
+  "must_be_independent": [],
+  "conditions": [],
+  "forbidden_tools": []
+}
+```
+
+该次实际已接受计划：
+
+```json
+{
+  "intent_category": "HUMAN_ESCALATION",
+  "primary_action": "TRANSFER_TO_HUMAN",
+  "planner_mode": "fast",
+  "summary": "用户请求人工接管",
+  "subtasks": []
+}
+```
+
+## 29. rp_efa7fe9160a3
+
+- 问题：先查订单 ORD-A001，校验订单是否允许退货，再申请退货，原因是拍错了，最后告知退货时效。
+- 分类/范围：deep_sequential / target_capability；通过 0/3。
+- 预期通道：Deep-Path；实际三次：Deep-Path、Deep-Path、Deep-Path
+- 首要阻断点：计划缺少结构化条件 3次
+- 第1次失败项：missing_or_wrong_structured_condition
+
+预期目标与关系：
+
+```json
+{
+  "required_goals": [
+    {
+      "goal_id": "order",
+      "any_of": [
+        {
+          "tool": "query_orders",
+          "arguments": {
+            "order_id": "ORD-A001"
+          }
+        }
+      ],
+      "allow_shared_node": false
+    },
+    {
+      "goal_id": "refund",
+      "any_of": [
+        {
+          "tool": "apply_refund",
+          "arguments": {
+            "refund_reason": "拍错了",
+            "order_id": "ORD-A001"
+          }
+        }
+      ],
+      "allow_shared_node": false
+    },
+    {
+      "goal_id": "policy",
+      "any_of": [
+        {
+          "tool": "knowledge_retriever",
+          "arguments": {},
+          "text_any": [
+            "退货",
+            "售后",
+            "时效"
+          ]
+        }
+      ],
+      "allow_shared_node": true
+    }
+  ],
+  "must_precede": [
+    [
+      "order",
+      "refund"
+    ]
+  ],
+  "must_be_independent": [],
+  "conditions": [
+    {
+      "target_goal": "refund",
+      "source_goal": "order",
+      "field": "status",
+      "operator": "in",
+      "value": [
+        "PAID",
+        "COMPLETED"
+      ]
+    }
+  ],
+  "forbidden_tools": []
+}
+```
+
+该次实际已接受计划：
+
+```json
+{
+  "intent_category": "COMPOSITE_TASK",
+  "primary_action": "apply_refund",
+  "planner_mode": "native",
+  "summary": "查询订单 ORD-A001 详情以校验退货资格，随后以“拍错了”为原因发起退货退款申请，并检索退货时效政策告知用户。",
+  "subtasks": [
+    {
+      "step_id": 1,
+      "tool_name": "query_orders",
+      "task_type": "READ_TOOL",
+      "arguments": {
+        "order_id": "ORD-A001"
+      },
+      "depends_on": [],
+      "description": "查询订单 ORD-A001 的详情与状态，用于校验是否允许退货"
+    },
+    {
+      "step_id": 2,
+      "tool_name": "knowledge_retriever",
+      "task_type": "KNOWLEDGE_QA",
+      "arguments": {
+        "query": "退货条件与退货时效规定"
+      },
+      "depends_on": [],
+      "description": "检索退货政策，确认退货资格条件与退货时效"
+    },
+    {
+      "step_id": 3,
+      "tool_name": "apply_refund",
+      "task_type": "WRITE_TOOL",
+      "arguments": {
+        "order_id": "ORD-A001",
+        "refund_reason": "拍错了"
+      },
+      "depends_on": [
+        1,
+        2
+      ],
+      "description": "基于订单校验结果，对 ORD-A001 发起退货退款申请，原因：拍错了"
+    }
+  ]
+}
+```
+
+## 30. rp_cbfef317b970
+
+- 问题：退款一般几天到账？
+- 分类/范围：fast_knowledge / current_regression；通过 0/3。
+- 预期通道：Fast-Path；实际三次：Deep-Path、Deep-Path、Deep-Path
+- 首要阻断点：路由先发生错误 3次
+- 第1次失败项：route_mismatch；planner_call_contract
+
+预期目标与关系：
+
+```json
+{
+  "required_goals": [],
+  "must_precede": [],
+  "must_be_independent": [],
+  "conditions": [],
+  "forbidden_tools": []
+}
+```
+
+该次实际已接受计划：
+
+```json
+{
+  "intent_category": "KNOWLEDGE_QA",
+  "primary_action": "knowledge_retriever",
+  "planner_mode": "native",
+  "summary": "用户咨询退款到账时效，属于政策咨询，仅检索知识库原文回答，不涉及任何写操作。",
+  "subtasks": [
+    {
+      "step_id": 1,
+      "tool_name": "knowledge_retriever",
+      "task_type": "KNOWLEDGE_QA",
+      "arguments": {
+        "query": "退款一般几天到账？退款到账时效政策"
+      },
+      "depends_on": [],
+      "description": "检索退款到账时效相关政策原文"
+    }
+  ]
+}
+```
+
+## 31. rp_668f369511c4
+
+- 问题：你们客服上班时间是几点？
+- 分类/范围：fast_knowledge / current_regression；通过 0/3。
+- 预期通道：Fast-Path；实际三次：Deep-Path、Deep-Path、Deep-Path
+- 首要阻断点：路由先发生错误 3次
+- 第1次失败项：route_mismatch；planner_call_contract
+
+预期目标与关系：
+
+```json
+{
+  "required_goals": [],
+  "must_precede": [],
+  "must_be_independent": [],
+  "conditions": [],
+  "forbidden_tools": []
+}
+```
+
+该次实际已接受计划：
+
+```json
+{
+  "intent_category": "KNOWLEDGE_QA",
+  "primary_action": "knowledge_retriever",
+  "planner_mode": "native",
+  "summary": "用户咨询客服服务时间，属于政策/服务信息查询，检索知识库原文回答。",
+  "subtasks": [
+    {
+      "step_id": 1,
+      "tool_name": "knowledge_retriever",
+      "task_type": "KNOWLEDGE_QA",
+      "arguments": {
+        "query": "客服上班时间/服务时间"
+      },
+      "depends_on": [],
+      "description": "检索客服服务时间相关政策原文"
+    }
+  ]
+}
+```
+
+## 32. rp_4add05c7f092
+
+- 问题：先给我查退款规则，再查订单 ORD-A001，然后申请退款，原因是拍错了。
+- 分类/范围：deep_sequential / current_regression；通过 0/3。
+- 预期通道：Deep-Path；实际三次：Deep-Path、Deep-Path、Deep-Path
+- 首要阻断点：真实的先后依赖缺失 3次
+- 第1次失败项：required_dependency
+
+预期目标与关系：
+
+```json
+{
+  "required_goals": [
+    {
+      "goal_id": "policy",
+      "any_of": [
+        {
+          "tool": "knowledge_retriever",
+          "arguments": {},
+          "text_any": [
+            "退款",
+            "退货"
+          ]
+        }
+      ],
+      "allow_shared_node": true
+    },
+    {
+      "goal_id": "order",
+      "any_of": [
+        {
+          "tool": "query_orders",
+          "arguments": {
+            "order_id": "ORD-A001"
+          }
+        }
+      ],
+      "allow_shared_node": false
+    },
+    {
+      "goal_id": "refund",
+      "any_of": [
+        {
+          "tool": "apply_refund",
+          "arguments": {
+            "refund_reason": "拍错了",
+            "order_id": "ORD-A001"
+          }
+        }
+      ],
+      "allow_shared_node": false
+    }
+  ],
+  "must_precede": [
+    [
+      "policy",
+      "order"
+    ],
+    [
+      "order",
+      "refund"
+    ]
+  ],
+  "must_be_independent": [],
+  "conditions": [],
+  "forbidden_tools": []
+}
+```
+
+该次实际已接受计划：
+
+```json
+{
+  "intent_category": "COMPOSITE_TASK",
+  "primary_action": "apply_refund",
+  "planner_mode": "native",
+  "summary": "先检索退款规则，再查询订单 ORD-A001 详情，最后基于查询结果对该订单发起退款申请（原因：拍错了）。",
+  "subtasks": [
+    {
+      "step_id": 1,
+      "tool_name": "knowledge_retriever",
+      "task_type": "KNOWLEDGE_QA",
+      "arguments": {
+        "query": "退款规则 售后退换货政策 退款条件与流程"
+      },
+      "depends_on": [],
+      "description": "检索售后退换货与退款规则政策原文"
+    },
+    {
+      "step_id": 2,
+      "tool_name": "query_orders",
+      "task_type": "READ_TOOL",
+      "arguments": {
+        "order_id": "ORD-A001"
+      },
+      "depends_on": [],
+      "description": "查询订单 ORD-A001 的详情与状态，确认是否可退款"
+    },
+    {
+      "step_id": 3,
+      "tool_name": "apply_refund",
+      "task_type": "WRITE_TOOL",
+      "arguments": {
+        "order_id": "ORD-A001",
+        "refund_reason": "拍错了"
+      },
+      "depends_on": [
+        1,
+        2
+      ],
+      "description": "对订单 ORD-A001 发起退款申请，退款原因为“拍错了”（需用户确认后执行）"
+    }
+  ]
+}
+```
+
+## 33. rp_36cfc205acdb
+
+- 问题：查询订单 ORD-A001 的物流；只有物流状态是 SHIPPING 才催件，否则只返回查询结果。
+- 分类/范围：deep_conditional / target_capability；通过 0/3。
+- 预期通道：Deep-Path；实际三次：Deep-Path、Deep-Path、Deep-Path
+- 首要阻断点：计划缺少结构化条件 3次
+- 第1次失败项：missing_or_wrong_structured_condition
+
+预期目标与关系：
+
+```json
+{
+  "required_goals": [
+    {
+      "goal_id": "logistics",
+      "any_of": [
+        {
+          "tool": "query_logistics",
+          "arguments": {
+            "order_id": "ORD-A001"
+          }
+        },
+        {
+          "tool": "query_orders",
+          "arguments": {
+            "order_id": "ORD-A001"
+          }
+        }
+      ],
+      "allow_shared_node": false
+    },
+    {
+      "goal_id": "expedite",
+      "any_of": [
+        {
+          "tool": "expedite_shipping",
+          "arguments": {
+            "order_id": "ORD-A001"
+          }
+        }
+      ],
+      "allow_shared_node": false
+    }
+  ],
+  "must_precede": [
+    [
+      "logistics",
+      "expedite"
+    ]
+  ],
+  "must_be_independent": [],
+  "conditions": [
+    {
+      "target_goal": "expedite",
+      "source_goal": "logistics",
+      "field": "status",
+      "operator": "eq",
+      "value": "SHIPPING"
+    }
+  ],
+  "forbidden_tools": []
+}
+```
+
+该次实际已接受计划：
+
+```json
+{
+  "intent_category": "COMPOSITE_TASK",
+  "primary_action": "query_logistics",
+  "planner_mode": "native",
+  "summary": "先查询订单 ORD-A001 的物流状态；仅当状态为 SHIPPING 时再执行加急催件，否则仅返回查询结果。",
+  "subtasks": [
+    {
+      "step_id": 1,
+      "tool_name": "query_logistics",
+      "task_type": "READ_TOOL",
+      "arguments": {
+        "order_id": "ORD-A001"
+      },
+      "depends_on": [],
+      "description": "查询订单 ORD-A001 的承运商、运单号及最新物流轨迹与状态"
+    },
+    {
+      "step_id": 2,
+      "tool_name": "expedite_shipping",
+      "task_type": "WRITE_TOOL",
+      "arguments": {
+        "order_id": "ORD-A001"
+      },
+      "depends_on": [
+        1
+      ],
+      "description": "条件动作：仅当步骤1查询到的物流状态为 SHIPPING 时，对订单 ORD-A001 下发加急催件指令；否则跳过"
+    }
+  ]
+}
+```
+
+## 34. rp_4fb98ea1269f
+
+- 问题：多谢你的帮助
+- 分类/范围：fast_greeting / current_regression；通过 0/3。
+- 预期通道：Fast-Path；实际三次：Deep-Path、Deep-Path、Deep-Path
+- 首要阻断点：路由先发生错误 3次
+- 第1次失败项：route_mismatch；planner_call_contract
+
+预期目标与关系：
+
+```json
+{
+  "required_goals": [],
+  "must_precede": [],
+  "must_be_independent": [],
+  "conditions": [],
+  "forbidden_tools": []
+}
+```
+
+该次实际已接受计划：
+
+```json
+{
+  "intent_category": "CHITCHAT",
+  "primary_action": null,
+  "planner_mode": "native",
+  "summary": "用户表达感谢，属闲聊，无需调用任何工具或规划写操作。",
+  "subtasks": []
+}
+```
+
+## 35. rp_f9e86d2906f0
+
+- 问题：配送服务覆盖哪些城市？
+- 分类/范围：fast_knowledge / current_regression；通过 0/3。
+- 预期通道：Fast-Path；实际三次：Deep-Path、Deep-Path、Deep-Path
+- 首要阻断点：路由先发生错误 3次
+- 第1次失败项：route_mismatch；planner_call_contract
+
+预期目标与关系：
+
+```json
+{
+  "required_goals": [],
+  "must_precede": [],
+  "must_be_independent": [],
+  "conditions": [],
+  "forbidden_tools": []
+}
+```
+
+该次实际已接受计划：
+
+```json
+{
+  "intent_category": "KNOWLEDGE_QA",
+  "primary_action": "knowledge_retriever",
+  "planner_mode": "native",
+  "summary": "用户咨询配送服务覆盖城市范围，属政策咨询，检索知识库原文回答。",
+  "subtasks": [
+    {
+      "step_id": 1,
+      "tool_name": "knowledge_retriever",
+      "task_type": "KNOWLEDGE_QA",
+      "arguments": {
+        "query": "配送服务覆盖哪些城市"
+      },
+      "depends_on": [],
+      "description": "检索配送服务覆盖城市范围的政策说明"
+    }
+  ]
+}
+```
+
+## 36. rp_ecf3ba785586
+
+- 问题：让人工专员接手这次咨询
+- 分类/范围：fast_handoff / current_regression；通过 0/3。
+- 预期通道：Fast-Path；实际三次：Deep-Path、Deep-Path、Deep-Path
+- 首要阻断点：路由先发生错误 3次
+- 第1次失败项：route_mismatch；planner_call_contract
+
+预期目标与关系：
+
+```json
+{
+  "required_goals": [],
+  "must_precede": [],
+  "must_be_independent": [],
+  "conditions": [],
+  "forbidden_tools": []
+}
+```
+
+该次实际已接受计划：
+
+```json
+{
+  "intent_category": "HUMAN_ESCALATION",
+  "primary_action": "human_escalation",
+  "planner_mode": "native",
+  "summary": "用户要求转接人工专员接手本次咨询，属于人工升级请求，无需调用业务工具，直接转人工处理。",
+  "subtasks": []
+}
+```
+
+## 37. rp_6e6be1bbf865
+
+- 问题：先查设备 DEV-100 的保修状态，在保则创建免费维修工单，过保则生成收费维修报价。
+- 分类/范围：deep_conditional / target_capability；通过 0/3。
+- 预期通道：Deep-Path；实际三次：Deep-Path、Deep-Path、Deep-Path
+- 首要阻断点：模型输出被契约校验拒绝 3次
+- 第1次失败项：inference_error:ValidationError；dag:missing_dag；missing_or_wrong_arguments:warranty,repair,quote；required_dependency；missing_or_wrong_structured_condition
+
+预期目标与关系：
+
+```json
+{
+  "required_goals": [
+    {
+      "goal_id": "warranty",
+      "any_of": [
+        {
+          "tool": "query_warranty",
+          "arguments": {
+            "device_id": "DEV-100"
+          }
+        }
+      ],
+      "allow_shared_node": false
+    },
+    {
+      "goal_id": "repair",
+      "any_of": [
+        {
+          "tool": "create_repair_ticket",
+          "arguments": {}
+        }
+      ],
+      "allow_shared_node": false
+    },
+    {
+      "goal_id": "quote",
+      "any_of": [
+        {
+          "tool": "quote_repair",
+          "arguments": {}
+        }
+      ],
+      "allow_shared_node": false
+    }
+  ],
+  "must_precede": [
+    [
+      "warranty",
+      "repair"
+    ],
+    [
+      "warranty",
+      "quote"
+    ]
+  ],
+  "must_be_independent": [],
+  "conditions": [
+    {
+      "target_goal": "repair",
+      "source_goal": "warranty",
+      "field": "in_warranty",
+      "operator": "eq",
+      "value": true
+    },
+    {
+      "target_goal": "quote",
+      "source_goal": "warranty",
+      "field": "in_warranty",
+      "operator": "eq",
+      "value": false
+    }
+  ],
+  "forbidden_tools": []
+}
+```
+
+该次实际已接受计划：
+
+```json
+null
+```
+
+该次被校验器拒绝的模型原始计划：
+
+```json
+[
+  {
+    "intent_category": "COMPOSITE_TASK",
+    "primary_action": "查询设备保修状态并据此创建维修工单或报价",
+    "planner_mode": null,
+    "summary": "用户请求查询设备 DEV-100 的保修状态，并根据结果分支处理（在保创建免费维修工单，过保生成收费维修报价）。当前工具注册表中没有设备保修查询、维修工单创建或维修报价生成的工具，无法规划可执行步骤，需向用户说明并追问。",
+    "subtasks": [
+      {
+        "step_id": 1,
+        "tool_name": "knowledge_retriever",
+        "task_type": "CLARIFICATION",
+        "arguments": {},
+        "depends_on": [],
+        "description": "当前可用工具仅覆盖订单、物流、退款、发票、改址、取消订单与加急派件，缺少设备保修状态查询、维修工单创建、维修报价生成能力。需向用户说明无法执行该请求，并确认设备 DEV-100 对应的订单号或转人工处理。"
+      }
+    ]
+  }
+]
+```
+
+## 38. rp_597942cabeca
+
+- 问题：先查订单 ORD-A001 的详细信息，再查退款进度，最后告诉我售后人工客服的工作时间。
+- 分类/范围：deep_sequential / current_regression；通过 0/3。
+- 预期通道：Deep-Path；实际三次：Fast-Path、Fast-Path、Fast-Path
+- 首要阻断点：路由先发生错误 3次
+- 第1次失败项：route_mismatch；planner_call_contract；dag:missing_dag；missing_or_wrong_arguments:order,refund_status,policy；required_dependency
+
+预期目标与关系：
+
+```json
+{
+  "required_goals": [
+    {
+      "goal_id": "order",
+      "any_of": [
+        {
+          "tool": "query_orders",
+          "arguments": {
+            "order_id": "ORD-A001"
+          }
+        }
+      ],
+      "allow_shared_node": false
+    },
+    {
+      "goal_id": "refund_status",
+      "any_of": [
+        {
+          "tool": "query_refund_status",
+          "arguments": {
+            "order_id": "ORD-A001"
+          }
+        }
+      ],
+      "allow_shared_node": false
+    },
+    {
+      "goal_id": "policy",
+      "any_of": [
+        {
+          "tool": "knowledge_retriever",
+          "arguments": {},
+          "text_any": [
+            "客服",
+            "工作时间",
+            "上班"
+          ]
+        }
+      ],
+      "allow_shared_node": true
+    }
+  ],
+  "must_precede": [
+    [
+      "order",
+      "refund_status"
+    ],
+    [
+      "refund_status",
+      "policy"
+    ]
+  ],
+  "must_be_independent": [],
+  "conditions": [],
+  "forbidden_tools": []
+}
+```
+
+该次实际已接受计划：
+
+```json
+{
+  "intent_category": "HUMAN_ESCALATION",
+  "primary_action": "TRANSFER_TO_HUMAN",
+  "planner_mode": "fast",
+  "summary": "用户请求人工接管",
+  "subtasks": []
+}
+```
+
+## 39. rp_fef0d64d08d1
+
+- 问题：你好，不要开票，帮我查订单 ORD-A001 的物流和退款政策。
+- 分类/范围：deep_mixed / current_regression；通过 0/3。
+- 预期通道：Deep-Path；实际三次：Fast-Path、Fast-Path、Fast-Path
+- 首要阻断点：路由先发生错误 3次
+- 第1次失败项：route_mismatch；planner_call_contract；missing_or_wrong_arguments:logistics,policy；unmatched_extra_task
+
+预期目标与关系：
+
+```json
+{
+  "required_goals": [
+    {
+      "goal_id": "logistics",
+      "any_of": [
+        {
+          "tool": "query_logistics",
+          "arguments": {
+            "order_id": "ORD-A001"
+          }
+        },
+        {
+          "tool": "query_orders",
+          "arguments": {
+            "order_id": "ORD-A001"
+          }
+        }
+      ],
+      "allow_shared_node": false
+    },
+    {
+      "goal_id": "policy",
+      "any_of": [
+        {
+          "tool": "knowledge_retriever",
+          "arguments": {},
+          "text_any": [
+            "退款",
+            "退货"
+          ]
+        }
+      ],
+      "allow_shared_node": true
+    }
+  ],
+  "must_precede": [],
+  "must_be_independent": [],
+  "conditions": [],
+  "forbidden_tools": [
+    "apply_invoice",
+    "apply_refund"
+  ]
+}
+```
+
+该次实际已接受计划：
+
+```json
+{
+  "intent_category": "KNOWLEDGE_QA",
+  "primary_action": "knowledge_retriever",
+  "planner_mode": "fast",
+  "summary": "查询官方知识库",
+  "subtasks": [
+    {
+      "step_id": 1,
+      "tool_name": "knowledge_retriever",
+      "task_type": "KNOWLEDGE_QA",
+      "arguments": {},
+      "depends_on": [],
+      "description": "查询官方知识库"
+    }
+  ]
+}
+```
+
+## 40. rp_98d1f244ce9b
+
+- 问题：先查订单 ORD-A001，如果状态是 PAID 就申请退款，原因是拍错了，否则只说明退款规则。
+- 分类/范围：deep_conditional / target_capability；通过 0/3。
+- 预期通道：Deep-Path；实际三次：Fast-Path、Fast-Path、Fast-Path
+- 首要阻断点：路由先发生错误 3次
+- 第1次失败项：route_mismatch；planner_call_contract；missing_or_wrong_arguments:order,refund,policy；required_dependency；missing_or_wrong_structured_condition；unmatched_extra_task
+
+预期目标与关系：
+
+```json
+{
+  "required_goals": [
+    {
+      "goal_id": "order",
+      "any_of": [
+        {
+          "tool": "query_orders",
+          "arguments": {
+            "order_id": "ORD-A001"
+          }
+        }
+      ],
+      "allow_shared_node": false
+    },
+    {
+      "goal_id": "refund",
+      "any_of": [
+        {
+          "tool": "apply_refund",
+          "arguments": {
+            "refund_reason": "拍错了",
+            "order_id": "ORD-A001"
+          }
+        }
+      ],
+      "allow_shared_node": false
+    },
+    {
+      "goal_id": "policy",
+      "any_of": [
+        {
+          "tool": "knowledge_retriever",
+          "arguments": {},
+          "text_any": [
+            "退款",
+            "退货"
+          ]
+        }
+      ],
+      "allow_shared_node": true
+    }
+  ],
+  "must_precede": [
+    [
+      "order",
+      "refund"
+    ],
+    [
+      "order",
+      "policy"
+    ]
+  ],
+  "must_be_independent": [],
+  "conditions": [
+    {
+      "target_goal": "refund",
+      "source_goal": "order",
+      "field": "status",
+      "operator": "eq",
+      "value": "PAID"
+    },
+    {
+      "target_goal": "policy",
+      "source_goal": "order",
+      "field": "status",
+      "operator": "ne",
+      "value": "PAID"
+    }
+  ],
+  "forbidden_tools": []
+}
+```
+
+该次实际已接受计划：
+
+```json
+{
+  "intent_category": "KNOWLEDGE_QA",
+  "primary_action": "knowledge_retriever",
+  "planner_mode": "fast",
+  "summary": "查询官方知识库",
+  "subtasks": [
+    {
+      "step_id": 1,
+      "tool_name": "knowledge_retriever",
+      "task_type": "KNOWLEDGE_QA",
+      "arguments": {},
+      "depends_on": [],
+      "description": "查询官方知识库"
+    }
+  ]
+}
+```
+
+## 41. rp_ffdcc2c62d1e
+
+- 问题：独立查询订单 ORD-A001 的退款进度和通用开票规则，最后一起告诉我。
+- 分类/范围：deep_parallel / current_regression；通过 0/3。
+- 预期通道：Deep-Path；实际三次：Fast-Path、Fast-Path、Fast-Path
+- 首要阻断点：路由先发生错误 3次
+- 第1次失败项：route_mismatch；planner_call_contract；missing_or_wrong_arguments:refund_status,policy；false_or_unverifiable_dependency；unmatched_extra_task
+
+预期目标与关系：
+
+```json
+{
+  "required_goals": [
+    {
+      "goal_id": "refund_status",
+      "any_of": [
+        {
+          "tool": "query_refund_status",
+          "arguments": {
+            "order_id": "ORD-A001"
+          }
+        }
+      ],
+      "allow_shared_node": false
+    },
+    {
+      "goal_id": "policy",
+      "any_of": [
+        {
+          "tool": "knowledge_retriever",
+          "arguments": {},
+          "text_any": [
+            "开票",
+            "发票"
+          ]
+        }
+      ],
+      "allow_shared_node": true
+    }
+  ],
+  "must_precede": [],
+  "must_be_independent": [
+    [
+      "refund_status",
+      "policy"
+    ]
+  ],
+  "conditions": [],
+  "forbidden_tools": []
+}
+```
+
+该次实际已接受计划：
+
+```json
+{
+  "intent_category": "KNOWLEDGE_QA",
+  "primary_action": "knowledge_retriever",
+  "planner_mode": "fast",
+  "summary": "查询官方知识库",
+  "subtasks": [
+    {
+      "step_id": 1,
+      "tool_name": "knowledge_retriever",
+      "task_type": "KNOWLEDGE_QA",
+      "arguments": {},
+      "depends_on": [],
+      "description": "查询官方知识库"
+    }
+  ]
+}
+```
+
+## 42. rp_839fa72bfd4a
+
+- 问题：运费一般由谁承担？
+- 分类/范围：fast_knowledge / current_regression；通过 0/3。
+- 预期通道：Fast-Path；实际三次：Deep-Path、Deep-Path、Deep-Path
+- 首要阻断点：路由先发生错误 3次
+- 第1次失败项：route_mismatch；planner_call_contract
+
+预期目标与关系：
+
+```json
+{
+  "required_goals": [],
+  "must_precede": [],
+  "must_be_independent": [],
+  "conditions": [],
+  "forbidden_tools": []
+}
+```
+
+该次实际已接受计划：
+
+```json
+{
+  "intent_category": "KNOWLEDGE_QA",
+  "primary_action": "knowledge_retriever",
+  "planner_mode": "native",
+  "summary": "用户咨询运费承担方的政策问题，属于知识问答，检索运费相关政策原文后回答。",
+  "subtasks": [
+    {
+      "step_id": 1,
+      "tool_name": "knowledge_retriever",
+      "task_type": "KNOWLEDGE_QA",
+      "arguments": {
+        "query": "运费由谁承担 运费承担规则 退换货运费政策"
+      },
+      "depends_on": [],
+      "description": "检索运费承担方相关政策条款，基于原文证据回答"
+    }
+  ]
+}
+```
+
+## 43. rp_b02237b1584a
+
+- 问题：你好呀！
+- 分类/范围：fast_greeting / current_regression；通过 0/3。
+- 预期通道：Fast-Path；实际三次：Deep-Path、Deep-Path、Deep-Path
+- 首要阻断点：路由先发生错误 3次
+- 第1次失败项：route_mismatch；planner_call_contract
+
+预期目标与关系：
+
+```json
+{
+  "required_goals": [],
+  "must_precede": [],
+  "must_be_independent": [],
+  "conditions": [],
+  "forbidden_tools": []
+}
+```
+
+该次实际已接受计划：
+
+```json
+{
+  "intent_category": "CHITCHAT",
+  "primary_action": null,
+  "planner_mode": "native",
+  "summary": "用户仅打招呼，无具体业务诉求，无需调用工具，直接友好回应并引导说明需求。",
+  "subtasks": []
+}
+```
+
+## 44. rp_1486bee11fb3
+
+- 问题：查订单 ORD-A001，如果未支付就取消，如果已支付就申请退款，原因是拍错了。
+- 分类/范围：deep_conditional / target_capability；通过 0/3。
+- 预期通道：Deep-Path；实际三次：Deep-Path、Deep-Path、Deep-Path
+- 首要阻断点：计划缺少结构化条件 3次
+- 第1次失败项：missing_or_wrong_structured_condition
+
+预期目标与关系：
+
+```json
+{
+  "required_goals": [
+    {
+      "goal_id": "order",
+      "any_of": [
+        {
+          "tool": "query_orders",
+          "arguments": {
+            "order_id": "ORD-A001"
+          }
+        }
+      ],
+      "allow_shared_node": false
+    },
+    {
+      "goal_id": "cancel",
+      "any_of": [
+        {
+          "tool": "cancel_unpaid_order",
+          "arguments": {
+            "order_id": "ORD-A001"
+          }
+        }
+      ],
+      "allow_shared_node": false
+    },
+    {
+      "goal_id": "refund",
+      "any_of": [
+        {
+          "tool": "apply_refund",
+          "arguments": {
+            "refund_reason": "拍错了",
+            "order_id": "ORD-A001"
+          }
+        }
+      ],
+      "allow_shared_node": false
+    }
+  ],
+  "must_precede": [
+    [
+      "order",
+      "cancel"
+    ],
+    [
+      "order",
+      "refund"
+    ]
+  ],
+  "must_be_independent": [],
+  "conditions": [
+    {
+      "target_goal": "cancel",
+      "source_goal": "order",
+      "field": "status",
+      "operator": "eq",
+      "value": "UNPAID"
+    },
+    {
+      "target_goal": "refund",
+      "source_goal": "order",
+      "field": "status",
+      "operator": "eq",
+      "value": "PAID"
+    }
+  ],
+  "forbidden_tools": []
+}
+```
+
+该次实际已接受计划：
+
+```json
+{
+  "intent_category": "COMPOSITE_TASK",
+  "primary_action": "query_orders",
+  "planner_mode": "native",
+  "summary": "先查询订单 ORD-A001 的状态，再按状态分支处理：未支付则取消订单，已支付则按“拍错了”原因申请退款。两个写操作互斥，均依赖查询结果。",
+  "subtasks": [
+    {
+      "step_id": 1,
+      "tool_name": "query_orders",
+      "task_type": "READ_TOOL",
+      "arguments": {
+        "order_id": "ORD-A001"
+      },
+      "depends_on": [],
+      "description": "查询订单 ORD-A001 的详情与支付状态"
+    },
+    {
+      "step_id": 2,
+      "tool_name": "cancel_unpaid_order",
+      "task_type": "WRITE_TOOL",
+      "arguments": {
+        "order_id": "ORD-A001",
+        "cancel_reason": "拍错了"
+      },
+      "depends_on": [
+        1
+      ],
+      "description": "若订单 ORD-A001 未支付，则取消该订单（条件分支，需用户确认）"
+    },
+    {
+      "step_id": 3,
+      "tool_name": "apply_refund",
+      "task_type": "WRITE_TOOL",
+      "arguments": {
+        "order_id": "ORD-A001",
+        "refund_reason": "拍错了"
+      },
+      "depends_on": [
+        1
+      ],
+      "description": "若订单 ORD-A001 已支付，则按“拍错了”原因申请退款（条件分支，需用户确认）"
+    }
+  ]
+}
+```
+
+## 45. rp_90f0342ec917
+
+- 问题：如果 SKU-100 有库存就下单，否则登记到货提醒；库存已核实，请据此安排。
+- 分类/范围：deep_conditional / target_capability；通过 0/3。
+- 预期通道：Deep-Path；实际三次：Deep-Path、Deep-Path、Deep-Path
+- 首要阻断点：缺少业务工具，返回空计划 3次
+- 第1次失败项：dag:missing_dag；missing_or_wrong_arguments:remind
+
+预期目标与关系：
+
+```json
+{
+  "required_goals": [
+    {
+      "goal_id": "remind",
+      "any_of": [
+        {
+          "tool": "subscribe_stock_alert",
+          "arguments": {
+            "sku": "SKU-100"
+          }
+        }
+      ],
+      "allow_shared_node": false
+    }
+  ],
+  "must_precede": [],
+  "must_be_independent": [],
+  "conditions": [],
+  "forbidden_tools": [
+    "create_order"
+  ]
+}
+```
+
+该次实际已接受计划：
+
+```json
+{
+  "intent_category": "CHITCHAT",
+  "primary_action": null,
+  "planner_mode": "native",
+  "summary": "用户提出的是条件式假设请求（有库存则下单，否则登记到货提醒）。已核实 SKU-100 可用库存为 0，条件不成立；且工具注册表中不存在下单或到货提醒登记能力，故不规划任何写操作，仅说明情况。",
+  "subtasks": []
+}
+```
+
+## 46. rp_1e62b499527e
+
+- 问题：查询订单 ORD-A001 是否已经开票，未开票才申请，抬头是星海科技有限公司，已开票则只展示订单信息。
+- 分类/范围：deep_conditional / target_capability；通过 0/3。
+- 预期通道：Deep-Path；实际三次：Deep-Path、Deep-Path、Deep-Path
+- 首要阻断点：计划缺少结构化条件 3次
+- 第1次失败项：missing_or_wrong_structured_condition
+
+预期目标与关系：
+
+```json
+{
+  "required_goals": [
+    {
+      "goal_id": "order",
+      "any_of": [
+        {
+          "tool": "query_orders",
+          "arguments": {
+            "order_id": "ORD-A001"
+          }
+        }
+      ],
+      "allow_shared_node": false
+    },
+    {
+      "goal_id": "invoice",
+      "any_of": [
+        {
+          "tool": "apply_invoice",
+          "arguments": {
+            "invoice_title": "星海科技有限公司",
+            "order_id": "ORD-A001"
+          }
+        }
+      ],
+      "allow_shared_node": false
+    }
+  ],
+  "must_precede": [
+    [
+      "order",
+      "invoice"
+    ]
+  ],
+  "must_be_independent": [],
+  "conditions": [
+    {
+      "target_goal": "invoice",
+      "source_goal": "order",
+      "field": "invoice_status",
+      "operator": "eq",
+      "value": "NOT_APPLIED"
+    }
+  ],
+  "forbidden_tools": []
+}
+```
+
+该次实际已接受计划：
+
+```json
+{
+  "intent_category": "COMPOSITE_TASK",
+  "primary_action": "查询订单开票状态并按条件申请开票",
+  "planner_mode": "native",
+  "summary": "先查询订单 ORD-A001 详情以确认开票状态；若未开票，则以抬头“星海科技有限公司”申请开票（税号、邮箱未提供，留空）；若已开票，仅展示订单信息。",
+  "subtasks": [
+    {
+      "step_id": 1,
+      "tool_name": "query_orders",
+      "task_type": "READ_TOOL",
+      "arguments": {
+        "order_id": "ORD-A001"
+      },
+      "depends_on": [],
+      "description": "查询订单 ORD-A001 的详情，确认是否已开票"
+    },
+    {
+      "step_id": 2,
+      "tool_name": "apply_invoice",
+      "task_type": "WRITE_TOOL",
+      "arguments": {
+        "order_id": "ORD-A001",
+        "invoice_title": "星海科技有限公司"
+      },
+      "depends_on": [
+        1
+      ],
+      "description": "若订单 ORD-A001 未开票，则以抬头“星海科技有限公司”申请开票（税号、邮箱未提供，留空待确认）"
+    }
+  ]
+}
+```

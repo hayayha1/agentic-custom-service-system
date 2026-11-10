@@ -195,13 +195,20 @@ async def submit_user_feedback(
         raise HTTPException(status_code=404, detail="消息记录不存在")
 
     session = await db.get(ChatSession, payload.session_id)
+    if (not session or msg.session_id != session.id or
+            session.tenant_id != current_user.tenant_id or
+            (current_user.is_end_user and session.customer_id != current_user.user_id)):
+        raise HTTPException(status_code=403, detail="无权评价该会话消息")
     product_code = session.product_code if session else "SAAS_CLOUD"
 
-    kb_stmt = select(KnowledgeBase.id).where(KnowledgeBase.product_code == product_code)
+    kb_stmt = select(KnowledgeBase.id).where(KnowledgeBase.product_code == product_code,
+                                           KnowledgeBase.tenant_id == session.tenant_id)
     kb_res = await db.execute(kb_stmt)
     kb_id = kb_res.scalars().first() or "b34fb60a-392c-4bb2-9e10-57539b37fed2"
 
     if payload.feedback_type.upper() == "DOWN":
+        from app.services.agent.evolution import evolution_service
+        await evolution_service.record_feedback(session.tenant_id, msg.id, payload.comment)
         # 优化上下文记忆：动态逆向回溯近三轮用户输入间的全部内容
         context_data = await badcase_service.get_sliding_context(
             db=db,

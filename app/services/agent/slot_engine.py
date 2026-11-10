@@ -25,7 +25,8 @@ class SlotEngine:
         query: str,
         customer_id: str,
         session_id: str,
-        action_type: str = ""
+        action_type: str = "",
+        use_memory: bool = True
     ) -> Dict[str, Any]:
         """从用户文本与上下文提取业务槽位参数"""
         extracted = {}
@@ -37,7 +38,7 @@ class SlotEngine:
             extracted["order_id"] = order_match.group(1).upper()
         else:
             # 代词消解：如果用户说“这个订单”、“刚才那单”、“最新这笔”，从工作记忆或最近订单补全
-            if any(w in query for w in ["这个", "这单", "刚才", "第一笔", "最新", "那单"]):
+            if use_memory and any(w in query for w in ["这个", "这单", "刚才", "第一笔", "最新", "那单"]):
                 ref_order = memory_hub.get_referenced_entity(session_id, "order_id")
                 if ref_order:
                     extracted["order_id"] = ref_order
@@ -84,7 +85,7 @@ class SlotEngine:
             extracted["tax_id"] = tax_match.group(1)
 
         # 记录识别到的实体至工作记忆
-        if "order_id" in extracted:
+        if use_memory and "order_id" in extracted:
             memory_hub.set_referenced_entity(session_id, "order_id", extracted["order_id"])
 
         return extracted

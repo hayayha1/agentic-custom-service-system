@@ -1962,13 +1962,13 @@
                       </div>
                       <div class="flex items-center gap-2 pt-1.5">
                         <button 
-                          @click="sendQuickPrompt(m.business_data.confirm_prompt || '确认办理')"
+                          @click="sendQuickPrompt(m.business_data.confirm_prompt || '确认办理', m.business_data.approval_id)"
                           class="flex-1 py-1.5 text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white rounded-lg shadow-sm transition flex items-center justify-center gap-1 cursor-pointer"
                         >
                           {{ m.business_data.confirm_text || '✅ 确认办理' }}
                         </button>
                         <button 
-                          @click="sendQuickPrompt(m.business_data.cancel_prompt || '取消办理')"
+                          @click="sendQuickPrompt(m.business_data.cancel_prompt || '取消办理', m.business_data.approval_id)"
                           class="px-3 py-1.5 text-xs font-medium bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-lg transition cursor-pointer"
                         >
                           {{ m.business_data.cancel_text || '❌ 取消' }}
@@ -11294,7 +11294,7 @@
 
         // 发送消息（严格防吞、防崩溃）
 
-        const handleSend = async () => {
+        const handleSend = async (approvalId = null) => {
 
           const q = inputQuery.value.trim();
 
@@ -11340,7 +11340,8 @@
 
                 session_id: currentSession.value.id,
 
-                query: q
+                query: q,
+                approval_id: typeof approvalId === 'string' ? approvalId : null
 
               })
 
@@ -11436,11 +11437,11 @@
 
 
 
-        const sendQuickPrompt = (txt) => {
+        const sendQuickPrompt = (txt, approvalId = null) => {
 
           inputQuery.value = txt;
 
-          handleSend();
+          handleSend(approvalId);
 
         };
 

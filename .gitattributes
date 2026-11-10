@@ -1,0 +1,12 @@
+# Preserve sealed benchmark fingerprints across Windows/Linux checkouts.
+data/evaluation/route_planner_v1/** -text
+
+# These exact production source bytes are referenced by the benchmark manifest.
+app/services/agent/planning.py -text
+app/services/agent/planner.py -text
+app/services/agent/llm.py -text
+app/services/agent/contracts.py -text
+app/services/agent/tools.py -text
+app/services/agent/policy.py -text
+app/services/model_service.py -text
+app/core/config.py -text

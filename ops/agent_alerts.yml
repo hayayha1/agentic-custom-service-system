@@ -1,0 +1,31 @@
+groups:
+  - name: zhishu-agent
+    rules:
+      - alert: AgentLatencyHigh
+        expr: histogram_quantile(0.95, sum by (le) (rate(agent_request_duration_seconds_bucket[5m]))) > 20
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Agent P95 响应时间超过 20 秒"
+      - alert: AgentToolFailures
+        expr: sum(rate(agent_events_total{event="tool_failure"}[5m])) / clamp_min(sum(rate(agent_events_total{event="tool"}[5m])), 0.001) > 0.2
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Agent 工具失败率超过 20%"
+      - alert: AgentGuardrailSpike
+        expr: sum(increase(agent_events_total{event="status_blocked"}[5m])) > 20
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Agent 输入安全拦截激增"
+      - alert: AgentLoopGuardTriggered
+        expr: sum(increase(agent_events_total{event="status_iteration_limit"}[5m])) > 3
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Agent 多次达到执行步数上限"

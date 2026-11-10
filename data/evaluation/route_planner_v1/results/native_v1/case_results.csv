@@ -1,0 +1,101 @@
+﻿case_id,group,scope,query,passed_repeats,route_correct_repeats,failure_counts
+rp_4d959720cb18,deep_parallel,current_regression,帮我查 ORD-A001 订单物流，同时查 ORD-B002 订单发票状态，最后汇总给我。,2,3,"{""inference_error:ValidationError"": 1, ""dag:missing_dag"": 1, ""missing_or_wrong_arguments:a,invoice_status_b"": 1, ""false_or_unverifiable_dependency"": 1}"
+rp_ecc59114683f,deep_conditional,target_capability,先查询设备 DEV-100 的报修记录，报修次数大于三次则通知运维，否则创建普通维修工单。,0,3,"{""inference_error:ValidationError"": 3, ""dag:missing_dag"": 3, ""missing_or_wrong_arguments:records,notify,ticket"": 3, ""required_dependency"": 3, ""missing_or_wrong_structured_condition"": 3}"
+rp_b444efc91c61,deep_sequential,current_regression,请按先后顺序查询 ORD-A001、ORD-B002 这两笔订单的物流，第一笔查完再查第二笔。,3,3,{}
+rp_224934bcb3cd,deep_sequential,current_regression,先查订单 ORD-A001 的退款进度，再查这笔订单的详细状态。,3,3,{}
+rp_2ca7c8434b15,fast_knowledge,current_regression,电子发票的申请规则是什么？,3,3,{}
+rp_41f1fc6d994f,deep_parallel,current_regression,查一下订单 ORD-A001 的物流，同时介绍通用退货政策，两项可以独立处理。,3,3,{}
+rp_50e54ecba18a,deep_mixed,current_regression,你好，帮我查订单 ORD-A001 的物流并开发票，抬头是星海科技有限公司。,3,3,{}
+rp_3b17cf397dde,deep_sequential,current_regression,先查看订单 ORD-A001 的物流，再把该订单的地址改为北京市海淀区中关村南大街1号。,3,3,{}
+rp_843f726e380b,fast_handoff,current_regression,转人工客服,3,3,{}
+rp_54cb2fda7ef4,fast_knowledge,current_regression,退换货政策是什么？,3,3,{}
+rp_0219b810abce,deep_conditional,target_capability,先查订单 ORD-A001，未发货就把地址改为北京市海淀区中关村南大街1号，已发货则只告诉我改派规则。,0,0,"{""route_mismatch"": 3, ""planner_call_contract"": 3, ""missing_or_wrong_arguments:order,address,policy"": 3, ""required_dependency"": 3, ""missing_or_wrong_structured_condition"": 3, ""unmatched_extra_task"": 3}"
+rp_4867133483cc,fast_knowledge,current_regression,退款规则是什么,3,3,{}
+rp_6c23cefce7b5,deep_parallel,current_regression,订单号已确认是 ORD-A001，请独立查询物流并申请发票，抬头是星海科技有限公司，两件事互不等待。,3,3,{}
+rp_94ddaca36c3f,deep_conditional,current_regression,如果订单 ORD-A001 还有效就申请退款，原因是拍错了；如果已经取消，就只解释取消后的退款政策。已核实状态在上下文中。,0,0,"{""route_mismatch"": 3, ""planner_call_contract"": 3, ""missing_or_wrong_arguments:policy"": 3, ""unmatched_extra_task"": 3}"
+rp_bb51265ede5b,fast_greeting,current_regression,hi,3,3,{}
+rp_b4345c06ba76,deep_sequential,current_regression,先查订单 ORD-A001，再开发票，抬头是星海科技有限公司，最后查询这单物流。,0,3,"{""required_dependency"": 3}"
+rp_fca33e6caabc,fast_greeting,current_regression,再见,3,3,{}
+rp_a92e9089d4fa,fast_greeting,current_regression,你好,3,3,{}
+rp_2682108b9a50,fast_greeting,current_regression,辛苦了，回头见,0,0,"{""route_mismatch"": 3, ""planner_call_contract"": 3}"
+rp_48e65f95d024,deep_sequential,current_regression,先核对订单 ORD-A001 的信息，再帮我催件。,3,3,{}
+rp_ff2ea6af7e47,deep_sequential,current_regression,先查订单 ORD-A001 的支付状态，然后告诉我通用开票规则。,0,3,"{""required_dependency"": 3}"
+rp_9248ab31bb0b,deep_conditional,current_regression,如果订单 ORD-A001 已支付就申请退款，未支付就取消；使用已核实状态，退款原因是拍错了。,3,3,{}
+rp_b741512db88e,deep_sequential,current_regression,先为订单 ORD-A001 申请退款，原因是拍错了，提交后再查退款进度。,3,3,{}
+rp_9fc90feb3cb2,fast_knowledge,current_regression,请问七天无理由退货政策是什么,3,3,{}
+rp_216e22c29df8,fast_handoff,current_regression,找客服,3,3,{}
+rp_f3c9a0bcc326,deep_parallel,current_regression,分别查退货政策和开票规则，这两项知识查询互不依赖，最后汇总。,0,0,"{""route_mismatch"": 3, ""planner_call_contract"": 3, ""missing_or_wrong_arguments:returns,invoices"": 3, ""false_or_unverifiable_dependency"": 3, ""unmatched_extra_task"": 3}"
+rp_73e0294340d0,deep_parallel,current_regression,同时查订单 ORD-A001 和 ORD-B002 的完整物流轨迹，最后汇总。,3,3,{}
+rp_19d200aaad0f,deep_parallel,current_regression,给订单 ORD-A001 和 ORD-B002 分别开发票，抬头均为星海科技有限公司，两笔独立申请。,3,3,{}
+rp_c210c3533504,deep_conditional,target_capability,先查订单 ORD-A001，状态是 PAID 才开发票，抬头是星海科技有限公司；未支付则取消订单。,0,3,"{""missing_or_wrong_structured_condition"": 3}"
+rp_bcabb5021055,deep_conditional,target_capability,先查订单 ORD-A001 的退货资格，允许退货才申请退款，原因是拍错了；不允许就只解释售后政策。,0,0,"{""route_mismatch"": 3, ""planner_call_contract"": 3, ""missing_or_wrong_arguments:order,refund,policy"": 3, ""required_dependency"": 3, ""missing_or_wrong_structured_condition"": 3, ""unmatched_extra_task"": 3}"
+rp_6b4408ead5b3,deep_mixed,current_regression,不要转人工，先查订单 ORD-A001 物流，再开票，抬头是星海科技有限公司。,0,0,"{""route_mismatch"": 3, ""planner_call_contract"": 3, ""dag:missing_dag"": 3, ""missing_or_wrong_arguments:logistics,invoice"": 3, ""required_dependency"": 3, ""forbidden_action"": 3}"
+rp_9e979d23627a,deep_mixed,current_regression,按照退款规则，先查订单 ORD-A001，再帮我申请退款，原因是拍错了。,0,0,"{""route_mismatch"": 3, ""planner_call_contract"": 3, ""missing_or_wrong_arguments:order,refund"": 3, ""required_dependency"": 3, ""unmatched_extra_task"": 3}"
+rp_7f3aada1120d,deep_mixed,current_regression,给订单 ORD-A001 开票，抬头是星海科技有限公司，另外查一下订单 ORD-B002 物流。,3,3,{}
+rp_e3c6e98a6de1,deep_parallel,current_regression,分别查询订单 ORD-A001 的详情、订单 ORD-B002 的退款进度以及售后政策，三个结果一起给我。,0,0,"{""route_mismatch"": 3, ""planner_call_contract"": 3, ""missing_or_wrong_arguments:order,refund_b,policy"": 3, ""false_or_unverifiable_dependency"": 3, ""unmatched_extra_task"": 3}"
+rp_6c2c1044c92b,deep_conditional,target_capability,先查商品 SKU-100 的库存，有库存就创建一笔订单，没有库存就登记到货提醒。,0,3,"{""inference_error:ValidationError"": 3, ""dag:missing_dag"": 3, ""missing_or_wrong_arguments:stock,buy,remind"": 3, ""required_dependency"": 3, ""missing_or_wrong_structured_condition"": 3}"
+rp_6950a7022ad4,fast_handoff,current_regression,接个真人来聊吧,0,0,"{""route_mismatch"": 3, ""planner_call_contract"": 3}"
+rp_19f0873bd569,deep_sequential,current_regression,先查订单 ORD-A001 的状态，然后查询这笔订单的物流。,3,3,{}
+rp_9a00cfc2b411,fast_knowledge,current_regression,周末客服也上班吗？,0,0,"{""route_mismatch"": 3, ""planner_call_contract"": 3}"
+rp_4ff59ba759fc,fast_greeting,current_regression,谢谢,3,3,{}
+rp_fc34021231ab,deep_sequential,current_regression,先查询订单 ORD-A001，然后开票，发票抬头是星海科技有限公司。,3,3,{}
+rp_06c9c493ee64,fast_knowledge,current_regression,发票可以开公司抬头吗？,0,0,"{""route_mismatch"": 3, ""planner_call_contract"": 3}"
+rp_87854eb42eda,deep_mixed,target_capability,查下我昨天买的服务器订单物流，顺便开专票，如果不想要了政策是怎样,0,3,"{""inference_error:ValidationError"": 3, ""dag:missing_dag"": 3, ""missing_or_wrong_arguments:logistics,invoice,policy"": 3}"
+rp_f3ea55ef81d9,deep_parallel,current_regression,订单 ORD-A001 的物流、订单 ORD-B002 的退款进度和通用退货政策，三件事分别查询后汇总。,0,0,"{""route_mismatch"": 3, ""planner_call_contract"": 3, ""missing_or_wrong_arguments:logistics,refund_b,policy"": 3, ""false_or_unverifiable_dependency"": 3, ""unmatched_extra_task"": 3}"
+rp_d4411355b4db,fast_knowledge,current_regression,服务器的保修期通常是多久？,0,0,"{""route_mismatch"": 3, ""planner_call_contract"": 3}"
+rp_8cef2ad9ea89,fast_knowledge,current_regression,请介绍一下售后服务政策,3,3,{}
+rp_02f71b3cc056,deep_sequential,current_regression,先查订单 ORD-A001，查完以后再查订单 ORD-B002。,3,3,{}
+rp_9d98271d137e,fast_handoff,current_regression,我要找真人客服,3,3,{}
+rp_84aca05e3f8b,fast_knowledge,current_regression,会员积分有效期有多久？,0,0,"{""route_mismatch"": 3, ""planner_call_contract"": 3}"
+rp_3fb501022db3,deep_sequential,current_regression,先查订单 ORD-A001 的退款进度，完成后再查订单 ORD-B002 的物流。,3,3,{}
+rp_72203a7e57ed,deep_parallel,current_regression,同时查询 ORD-A001 和 ORD-B002 的退款审核进度。,3,3,{}
+rp_fca01244e52a,fast_greeting,current_regression,早上好，请问在吗？,0,0,"{""route_mismatch"": 3, ""planner_call_contract"": 3}"
+rp_f6e3d681dbfd,fast_knowledge,current_regression,不是要开票，我只问开票规则,3,3,{}
+rp_f58cee566845,deep_mixed,target_capability,帮我查询这个设备的报修记录，生成工单，同时通知运维，还要告诉我保修到期时间,0,3,"{""inference_error:ValidationError"": 3, ""dag:missing_dag"": 3, ""missing_or_wrong_arguments:records,ticket,notify,warranty"": 3, ""required_dependency"": 3, ""false_or_unverifiable_dependency"": 3}"
+rp_edfd3c62af76,fast_knowledge,current_regression,配送规则是什么,3,3,{}
+rp_a7b9a11a2166,fast_knowledge,current_regression,促销优惠的使用规则是什么,3,3,{}
+rp_595f708ecdb2,deep_conditional,target_capability,如果 SKU-100 有库存就下单，没有就登记提醒；使用刚才已经核实的库存结果。,0,3,"{""inference_error:ValidationError"": 1, ""dag:missing_dag"": 3, ""missing_or_wrong_arguments:buy"": 3}"
+rp_036f92dc179e,deep_mixed,target_capability,先查余额，申请退款，再查看退款到账周期,0,3,"{""inference_error:ValidationError"": 3, ""dag:missing_dag"": 3, ""missing_or_wrong_arguments:balance,refund,policy"": 3, ""required_dependency"": 3}"
+rp_761dd15fee3e,deep_sequential,current_regression,先查订单 ORD-A001 的状态，再开具发票，抬头是星海科技有限公司，之后解释开票政策。,0,0,"{""route_mismatch"": 3, ""planner_call_contract"": 3, ""missing_or_wrong_arguments:order,invoice,policy"": 3, ""required_dependency"": 3, ""unmatched_extra_task"": 3}"
+rp_f5b650908342,deep_conditional,target_capability,先查我的可退余额，余额不少于100元就对订单 ORD-A001 申请100元退款，原因是拍错了，否则转人工核实。,0,0,"{""route_mismatch"": 3, ""planner_call_contract"": 3, ""dag:missing_dag"": 3, ""missing_or_wrong_arguments:balance,refund,handoff"": 3, ""required_dependency"": 3, ""missing_or_wrong_structured_condition"": 3}"
+rp_9da3f4de883e,fast_handoff,current_regression,不要自动办理业务，帮我转人工,3,3,{}
+rp_d8542119ab1f,deep_parallel,current_regression,分别查询订单 ORD-A001 的详细状态与订单 ORD-B002 的物流，互不依赖。,3,3,{}
+rp_389a7be52de5,deep_sequential,current_regression,先查询订单 ORD-A001 的物流，再帮我催一下这笔订单的快递。,3,3,{}
+rp_759af93196fc,fast_handoff,current_regression,请帮我接一位人工客服,3,3,{}
+rp_eb50ad3275c1,deep_mixed,target_capability,先查订单 ORD-A001 的状态，再把查询结果交给人工客服。,0,0,"{""route_mismatch"": 3, ""planner_call_contract"": 3, ""dag:missing_dag"": 3, ""missing_or_wrong_arguments:order,handoff"": 3, ""required_dependency"": 3}"
+rp_efa7fe9160a3,deep_sequential,target_capability,先查订单 ORD-A001，校验订单是否允许退货，再申请退货，原因是拍错了，最后告知退货时效。,0,3,"{""missing_or_wrong_structured_condition"": 3}"
+rp_435ad0919cb2,deep_parallel,current_regression,并行查订单 ORD-A001、ORD-B002、ORD-C003 的物流，最后汇总三单结果。,3,3,{}
+rp_be44ffd3fedc,fast_handoff,current_regression,请呼叫人工,3,3,{}
+rp_cbfef317b970,fast_knowledge,current_regression,退款一般几天到账？,0,0,"{""route_mismatch"": 3, ""planner_call_contract"": 3}"
+rp_afd5b28d8b4e,deep_parallel,current_regression,同时查订单 ORD-A001 的物流和订单 ORD-B002 的退款进度。,3,3,{}
+rp_6e569cd85bef,deep_sequential,current_regression,先查订单 ORD-A001，再把收货地址改为北京市海淀区中关村南大街1号，修改后查询这笔订单物流。,3,3,{}
+rp_9d7410c9b34c,deep_sequential,current_regression,先查订单 ORD-A001 的详细信息，再取消这笔未支付订单。,3,3,{}
+rp_d36a6d17171d,fast_knowledge,current_regression,你们的质保政策是什么,3,3,{}
+rp_3cbd3b6c2959,fast_knowledge,current_regression,不要给我申请退款，只告诉我退款规则,3,3,{}
+rp_c25e424f0893,deep_mixed,current_regression,查昨天那笔订单的物流，也查一下前天那笔订单的退款进度。,3,3,{}
+rp_0c4c84e0deb6,fast_handoff,current_regression,帮我转人工,3,3,{}
+rp_774c927541fd,deep_sequential,current_regression,先查订单 ORD-A001，再查订单 ORD-B002，最后只为 ORD-B002 开发票，抬头是星海科技有限公司。,3,3,{}
+rp_668f369511c4,fast_knowledge,current_regression,你们客服上班时间是几点？,0,0,"{""route_mismatch"": 3, ""planner_call_contract"": 3}"
+rp_4add05c7f092,deep_sequential,current_regression,先给我查退款规则，再查订单 ORD-A001，然后申请退款，原因是拍错了。,0,3,"{""required_dependency"": 3}"
+rp_36cfc205acdb,deep_conditional,target_capability,查询订单 ORD-A001 的物流；只有物流状态是 SHIPPING 才催件，否则只返回查询结果。,0,3,"{""missing_or_wrong_structured_condition"": 3}"
+rp_4fb98ea1269f,fast_greeting,current_regression,多谢你的帮助,0,0,"{""route_mismatch"": 3, ""planner_call_contract"": 3}"
+rp_f9e86d2906f0,fast_knowledge,current_regression,配送服务覆盖哪些城市？,0,0,"{""route_mismatch"": 3, ""planner_call_contract"": 3}"
+rp_ecf3ba785586,fast_handoff,current_regression,让人工专员接手这次咨询,0,0,"{""route_mismatch"": 3, ""planner_call_contract"": 3}"
+rp_6e6be1bbf865,deep_conditional,target_capability,先查设备 DEV-100 的保修状态，在保则创建免费维修工单，过保则生成收费维修报价。,0,3,"{""inference_error:ValidationError"": 3, ""dag:missing_dag"": 3, ""missing_or_wrong_arguments:warranty,repair,quote"": 3, ""required_dependency"": 3, ""missing_or_wrong_structured_condition"": 3}"
+rp_129d84273d4c,fast_handoff,current_regression,直接转人工，不需要机器人处理,3,3,{}
+rp_b2a03103c7d6,deep_sequential,current_regression,先核对订单 ORD-B002，再为这笔订单申请退款，原因是拍错了。,3,3,{}
+rp_98a3ce6b51de,deep_parallel,current_regression,独立为订单 ORD-A001 开发票，抬头是星海科技有限公司，并查询订单 ORD-B002 的物流。,3,3,{}
+rp_597942cabeca,deep_sequential,current_regression,先查订单 ORD-A001 的详细信息，再查退款进度，最后告诉我售后人工客服的工作时间。,0,0,"{""route_mismatch"": 3, ""planner_call_contract"": 3, ""dag:missing_dag"": 3, ""missing_or_wrong_arguments:order,refund_status,policy"": 3, ""required_dependency"": 3}"
+rp_c98cfc4cd776,fast_knowledge,current_regression,开票规则是什么,3,3,{}
+rp_fef0d64d08d1,deep_mixed,current_regression,你好，不要开票，帮我查订单 ORD-A001 的物流和退款政策。,0,0,"{""route_mismatch"": 3, ""planner_call_contract"": 3, ""missing_or_wrong_arguments:logistics,policy"": 3, ""unmatched_extra_task"": 3}"
+rp_98d1f244ce9b,deep_conditional,target_capability,先查订单 ORD-A001，如果状态是 PAID 就申请退款，原因是拍错了，否则只说明退款规则。,0,0,"{""route_mismatch"": 3, ""planner_call_contract"": 3, ""missing_or_wrong_arguments:order,refund,policy"": 3, ""required_dependency"": 3, ""missing_or_wrong_structured_condition"": 3, ""unmatched_extra_task"": 3}"
+rp_af8949d21e30,fast_knowledge,current_regression,账户注销规则是什么,3,3,{}
+rp_ffdcc2c62d1e,deep_parallel,current_regression,独立查询订单 ORD-A001 的退款进度和通用开票规则，最后一起告诉我。,0,0,"{""route_mismatch"": 3, ""planner_call_contract"": 3, ""missing_or_wrong_arguments:refund_status,policy"": 3, ""false_or_unverifiable_dependency"": 3, ""unmatched_extra_task"": 3}"
+rp_839fa72bfd4a,fast_knowledge,current_regression,运费一般由谁承担？,0,0,"{""route_mismatch"": 3, ""planner_call_contract"": 3}"
+rp_08c3cec79213,fast_greeting,current_regression,hello,3,3,{}
+rp_0268a63384bb,deep_parallel,current_regression,一边查订单 ORD-A001 的详情，一边介绍客服服务时间，分别处理后汇总。,3,3,{}
+rp_7107615b7d58,fast_greeting,current_regression,您好,3,3,{}
+rp_b02237b1584a,fast_greeting,current_regression,你好呀！,0,0,"{""route_mismatch"": 3, ""planner_call_contract"": 3}"
+rp_1486bee11fb3,deep_conditional,target_capability,查订单 ORD-A001，如果未支付就取消，如果已支付就申请退款，原因是拍错了。,0,3,"{""missing_or_wrong_structured_condition"": 3}"
+rp_90f0342ec917,deep_conditional,target_capability,如果 SKU-100 有库存就下单，否则登记到货提醒；库存已核实，请据此安排。,0,3,"{""dag:missing_dag"": 3, ""missing_or_wrong_arguments:remind"": 3}"
+rp_1e62b499527e,deep_conditional,target_capability,查询订单 ORD-A001 是否已经开票，未开票才申请，抬头是星海科技有限公司，已开票则只展示订单信息。,0,3,"{""missing_or_wrong_structured_condition"": 3}"

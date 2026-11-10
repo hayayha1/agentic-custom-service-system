@@ -1,0 +1,100 @@
+{"case_id": "rp_4d959720cb18", "query": "帮我查 ORD-A001 订单物流，同时查 ORD-B002 订单发票状态，最后汇总给我。", "context": {"current_time": "2026-11-07T10:00:00+08:00", "timezone": "Asia/Shanghai", "episode": {"entities": {}, "facts": {}, "summary": ""}, "profile": {}}}
+{"case_id": "rp_ecc59114683f", "query": "先查询设备 DEV-100 的报修记录，报修次数大于三次则通知运维，否则创建普通维修工单。", "context": {"current_time": "2026-11-07T10:00:00+08:00", "timezone": "Asia/Shanghai", "episode": {"entities": {}, "facts": {}, "summary": ""}, "profile": {}}}
+{"case_id": "rp_b444efc91c61", "query": "请按先后顺序查询 ORD-A001、ORD-B002 这两笔订单的物流，第一笔查完再查第二笔。", "context": {"current_time": "2026-11-07T10:00:00+08:00", "timezone": "Asia/Shanghai", "episode": {"entities": {}, "facts": {}, "summary": ""}, "profile": {}}}
+{"case_id": "rp_224934bcb3cd", "query": "先查订单 ORD-A001 的退款进度，再查这笔订单的详细状态。", "context": {"current_time": "2026-11-07T10:00:00+08:00", "timezone": "Asia/Shanghai", "episode": {"entities": {}, "facts": {}, "summary": ""}, "profile": {}}}
+{"case_id": "rp_2ca7c8434b15", "query": "电子发票的申请规则是什么？", "context": {}}
+{"case_id": "rp_41f1fc6d994f", "query": "查一下订单 ORD-A001 的物流，同时介绍通用退货政策，两项可以独立处理。", "context": {"current_time": "2026-11-07T10:00:00+08:00", "timezone": "Asia/Shanghai", "episode": {"entities": {}, "facts": {}, "summary": ""}, "profile": {}}}
+{"case_id": "rp_50e54ecba18a", "query": "你好，帮我查订单 ORD-A001 的物流并开发票，抬头是星海科技有限公司。", "context": {"current_time": "2026-11-07T10:00:00+08:00", "timezone": "Asia/Shanghai", "episode": {"entities": {}, "facts": {}, "summary": ""}, "profile": {}}}
+{"case_id": "rp_3b17cf397dde", "query": "先查看订单 ORD-A001 的物流，再把该订单的地址改为北京市海淀区中关村南大街1号。", "context": {"current_time": "2026-11-07T10:00:00+08:00", "timezone": "Asia/Shanghai", "episode": {"entities": {}, "facts": {}, "summary": ""}, "profile": {}}}
+{"case_id": "rp_843f726e380b", "query": "转人工客服", "context": {}}
+{"case_id": "rp_54cb2fda7ef4", "query": "退换货政策是什么？", "context": {}}
+{"case_id": "rp_0219b810abce", "query": "先查订单 ORD-A001，未发货就把地址改为北京市海淀区中关村南大街1号，已发货则只告诉我改派规则。", "context": {"current_time": "2026-11-07T10:00:00+08:00", "timezone": "Asia/Shanghai", "episode": {"entities": {}, "facts": {}, "summary": ""}, "profile": {}}}
+{"case_id": "rp_4867133483cc", "query": "退款规则是什么", "context": {}}
+{"case_id": "rp_6c23cefce7b5", "query": "订单号已确认是 ORD-A001，请独立查询物流并申请发票，抬头是星海科技有限公司，两件事互不等待。", "context": {"current_time": "2026-11-07T10:00:00+08:00", "timezone": "Asia/Shanghai", "episode": {"entities": {}, "facts": {}, "summary": ""}, "profile": {}}}
+{"case_id": "rp_94ddaca36c3f", "query": "如果订单 ORD-A001 还有效就申请退款，原因是拍错了；如果已经取消，就只解释取消后的退款政策。已核实状态在上下文中。", "context": {"current_time": "2026-11-07T10:00:00+08:00", "timezone": "Asia/Shanghai", "episode": {"entities": {}, "facts": {}, "summary": ""}, "profile": {}, "orders": [{"order_id": "ORD-A001", "status": "CANCELLED", "verified": true}]}}
+{"case_id": "rp_bb51265ede5b", "query": "hi", "context": {}}
+{"case_id": "rp_b4345c06ba76", "query": "先查订单 ORD-A001，再开发票，抬头是星海科技有限公司，最后查询这单物流。", "context": {"current_time": "2026-11-07T10:00:00+08:00", "timezone": "Asia/Shanghai", "episode": {"entities": {}, "facts": {}, "summary": ""}, "profile": {}}}
+{"case_id": "rp_fca33e6caabc", "query": "再见", "context": {}}
+{"case_id": "rp_a92e9089d4fa", "query": "你好", "context": {}}
+{"case_id": "rp_2682108b9a50", "query": "辛苦了，回头见", "context": {}}
+{"case_id": "rp_48e65f95d024", "query": "先核对订单 ORD-A001 的信息，再帮我催件。", "context": {"current_time": "2026-11-07T10:00:00+08:00", "timezone": "Asia/Shanghai", "episode": {"entities": {}, "facts": {}, "summary": ""}, "profile": {}}}
+{"case_id": "rp_ff2ea6af7e47", "query": "先查订单 ORD-A001 的支付状态，然后告诉我通用开票规则。", "context": {"current_time": "2026-11-07T10:00:00+08:00", "timezone": "Asia/Shanghai", "episode": {"entities": {}, "facts": {}, "summary": ""}, "profile": {}}}
+{"case_id": "rp_9248ab31bb0b", "query": "如果订单 ORD-A001 已支付就申请退款，未支付就取消；使用已核实状态，退款原因是拍错了。", "context": {"current_time": "2026-11-07T10:00:00+08:00", "timezone": "Asia/Shanghai", "episode": {"entities": {}, "facts": {}, "summary": ""}, "profile": {}, "orders": [{"order_id": "ORD-A001", "status": "PAID", "verified": true}]}}
+{"case_id": "rp_b741512db88e", "query": "先为订单 ORD-A001 申请退款，原因是拍错了，提交后再查退款进度。", "context": {"current_time": "2026-11-07T10:00:00+08:00", "timezone": "Asia/Shanghai", "episode": {"entities": {}, "facts": {}, "summary": ""}, "profile": {}}}
+{"case_id": "rp_9fc90feb3cb2", "query": "请问七天无理由退货政策是什么", "context": {}}
+{"case_id": "rp_216e22c29df8", "query": "找客服", "context": {}}
+{"case_id": "rp_f3c9a0bcc326", "query": "分别查退货政策和开票规则，这两项知识查询互不依赖，最后汇总。", "context": {"current_time": "2026-11-07T10:00:00+08:00", "timezone": "Asia/Shanghai", "episode": {"entities": {}, "facts": {}, "summary": ""}, "profile": {}}}
+{"case_id": "rp_73e0294340d0", "query": "同时查订单 ORD-A001 和 ORD-B002 的完整物流轨迹，最后汇总。", "context": {"current_time": "2026-11-07T10:00:00+08:00", "timezone": "Asia/Shanghai", "episode": {"entities": {}, "facts": {}, "summary": ""}, "profile": {}}}
+{"case_id": "rp_19d200aaad0f", "query": "给订单 ORD-A001 和 ORD-B002 分别开发票，抬头均为星海科技有限公司，两笔独立申请。", "context": {"current_time": "2026-11-07T10:00:00+08:00", "timezone": "Asia/Shanghai", "episode": {"entities": {}, "facts": {}, "summary": ""}, "profile": {}}}
+{"case_id": "rp_c210c3533504", "query": "先查订单 ORD-A001，状态是 PAID 才开发票，抬头是星海科技有限公司；未支付则取消订单。", "context": {"current_time": "2026-11-07T10:00:00+08:00", "timezone": "Asia/Shanghai", "episode": {"entities": {}, "facts": {}, "summary": ""}, "profile": {}}}
+{"case_id": "rp_bcabb5021055", "query": "先查订单 ORD-A001 的退货资格，允许退货才申请退款，原因是拍错了；不允许就只解释售后政策。", "context": {"current_time": "2026-11-07T10:00:00+08:00", "timezone": "Asia/Shanghai", "episode": {"entities": {}, "facts": {}, "summary": ""}, "profile": {}}}
+{"case_id": "rp_6b4408ead5b3", "query": "不要转人工，先查订单 ORD-A001 物流，再开票，抬头是星海科技有限公司。", "context": {"current_time": "2026-11-07T10:00:00+08:00", "timezone": "Asia/Shanghai", "episode": {"entities": {}, "facts": {}, "summary": ""}, "profile": {}}}
+{"case_id": "rp_9e979d23627a", "query": "按照退款规则，先查订单 ORD-A001，再帮我申请退款，原因是拍错了。", "context": {"current_time": "2026-11-07T10:00:00+08:00", "timezone": "Asia/Shanghai", "episode": {"entities": {}, "facts": {}, "summary": ""}, "profile": {}}}
+{"case_id": "rp_7f3aada1120d", "query": "给订单 ORD-A001 开票，抬头是星海科技有限公司，另外查一下订单 ORD-B002 物流。", "context": {"current_time": "2026-11-07T10:00:00+08:00", "timezone": "Asia/Shanghai", "episode": {"entities": {}, "facts": {}, "summary": ""}, "profile": {}}}
+{"case_id": "rp_e3c6e98a6de1", "query": "分别查询订单 ORD-A001 的详情、订单 ORD-B002 的退款进度以及售后政策，三个结果一起给我。", "context": {"current_time": "2026-11-07T10:00:00+08:00", "timezone": "Asia/Shanghai", "episode": {"entities": {}, "facts": {}, "summary": ""}, "profile": {}}}
+{"case_id": "rp_6c2c1044c92b", "query": "先查商品 SKU-100 的库存，有库存就创建一笔订单，没有库存就登记到货提醒。", "context": {"current_time": "2026-11-07T10:00:00+08:00", "timezone": "Asia/Shanghai", "episode": {"entities": {}, "facts": {}, "summary": ""}, "profile": {}}}
+{"case_id": "rp_6950a7022ad4", "query": "接个真人来聊吧", "context": {}}
+{"case_id": "rp_19f0873bd569", "query": "先查订单 ORD-A001 的状态，然后查询这笔订单的物流。", "context": {"current_time": "2026-11-07T10:00:00+08:00", "timezone": "Asia/Shanghai", "episode": {"entities": {}, "facts": {}, "summary": ""}, "profile": {}}}
+{"case_id": "rp_9a00cfc2b411", "query": "周末客服也上班吗？", "context": {}}
+{"case_id": "rp_4ff59ba759fc", "query": "谢谢", "context": {}}
+{"case_id": "rp_fc34021231ab", "query": "先查询订单 ORD-A001，然后开票，发票抬头是星海科技有限公司。", "context": {"current_time": "2026-11-07T10:00:00+08:00", "timezone": "Asia/Shanghai", "episode": {"entities": {}, "facts": {}, "summary": ""}, "profile": {}}}
+{"case_id": "rp_06c9c493ee64", "query": "发票可以开公司抬头吗？", "context": {}}
+{"case_id": "rp_87854eb42eda", "query": "查下我昨天买的服务器订单物流，顺便开专票，如果不想要了政策是怎样", "context": {"current_time": "2026-11-07T10:00:00+08:00", "timezone": "Asia/Shanghai", "episode": {"entities": {}, "facts": {}, "summary": ""}, "profile": {}, "orders": [{"order_id": "ORD-A001", "product": "服务器", "created_at": "2026-11-06T14:00:00+08:00"}]}}
+{"case_id": "rp_f3ea55ef81d9", "query": "订单 ORD-A001 的物流、订单 ORD-B002 的退款进度和通用退货政策，三件事分别查询后汇总。", "context": {"current_time": "2026-11-07T10:00:00+08:00", "timezone": "Asia/Shanghai", "episode": {"entities": {}, "facts": {}, "summary": ""}, "profile": {}}}
+{"case_id": "rp_d4411355b4db", "query": "服务器的保修期通常是多久？", "context": {}}
+{"case_id": "rp_8cef2ad9ea89", "query": "请介绍一下售后服务政策", "context": {}}
+{"case_id": "rp_02f71b3cc056", "query": "先查订单 ORD-A001，查完以后再查订单 ORD-B002。", "context": {"current_time": "2026-11-07T10:00:00+08:00", "timezone": "Asia/Shanghai", "episode": {"entities": {}, "facts": {}, "summary": ""}, "profile": {}}}
+{"case_id": "rp_9d98271d137e", "query": "我要找真人客服", "context": {}}
+{"case_id": "rp_84aca05e3f8b", "query": "会员积分有效期有多久？", "context": {}}
+{"case_id": "rp_3fb501022db3", "query": "先查订单 ORD-A001 的退款进度，完成后再查订单 ORD-B002 的物流。", "context": {"current_time": "2026-11-07T10:00:00+08:00", "timezone": "Asia/Shanghai", "episode": {"entities": {}, "facts": {}, "summary": ""}, "profile": {}}}
+{"case_id": "rp_72203a7e57ed", "query": "同时查询 ORD-A001 和 ORD-B002 的退款审核进度。", "context": {"current_time": "2026-11-07T10:00:00+08:00", "timezone": "Asia/Shanghai", "episode": {"entities": {}, "facts": {}, "summary": ""}, "profile": {}}}
+{"case_id": "rp_fca01244e52a", "query": "早上好，请问在吗？", "context": {}}
+{"case_id": "rp_f6e3d681dbfd", "query": "不是要开票，我只问开票规则", "context": {}}
+{"case_id": "rp_f58cee566845", "query": "帮我查询这个设备的报修记录，生成工单，同时通知运维，还要告诉我保修到期时间", "context": {"current_time": "2026-11-07T10:00:00+08:00", "timezone": "Asia/Shanghai", "episode": {"entities": {"device_id": "DEV-100"}}, "profile": {}}}
+{"case_id": "rp_edfd3c62af76", "query": "配送规则是什么", "context": {}}
+{"case_id": "rp_a7b9a11a2166", "query": "促销优惠的使用规则是什么", "context": {}}
+{"case_id": "rp_595f708ecdb2", "query": "如果 SKU-100 有库存就下单，没有就登记提醒；使用刚才已经核实的库存结果。", "context": {"current_time": "2026-11-07T10:00:00+08:00", "timezone": "Asia/Shanghai", "episode": {"entities": {}, "facts": {}, "summary": ""}, "profile": {}, "inventory": {"sku": "SKU-100", "available_quantity": 5, "verified": true}}}
+{"case_id": "rp_036f92dc179e", "query": "先查余额，申请退款，再查看退款到账周期", "context": {"current_time": "2026-11-07T10:00:00+08:00", "timezone": "Asia/Shanghai", "episode": {"entities": {}, "facts": {}, "summary": ""}, "profile": {}}}
+{"case_id": "rp_761dd15fee3e", "query": "先查订单 ORD-A001 的状态，再开具发票，抬头是星海科技有限公司，之后解释开票政策。", "context": {"current_time": "2026-11-07T10:00:00+08:00", "timezone": "Asia/Shanghai", "episode": {"entities": {}, "facts": {}, "summary": ""}, "profile": {}}}
+{"case_id": "rp_f5b650908342", "query": "先查我的可退余额，余额不少于100元就对订单 ORD-A001 申请100元退款，原因是拍错了，否则转人工核实。", "context": {"current_time": "2026-11-07T10:00:00+08:00", "timezone": "Asia/Shanghai", "episode": {"entities": {}, "facts": {}, "summary": ""}, "profile": {}}}
+{"case_id": "rp_9da3f4de883e", "query": "不要自动办理业务，帮我转人工", "context": {}}
+{"case_id": "rp_d8542119ab1f", "query": "分别查询订单 ORD-A001 的详细状态与订单 ORD-B002 的物流，互不依赖。", "context": {"current_time": "2026-11-07T10:00:00+08:00", "timezone": "Asia/Shanghai", "episode": {"entities": {}, "facts": {}, "summary": ""}, "profile": {}}}
+{"case_id": "rp_389a7be52de5", "query": "先查询订单 ORD-A001 的物流，再帮我催一下这笔订单的快递。", "context": {"current_time": "2026-11-07T10:00:00+08:00", "timezone": "Asia/Shanghai", "episode": {"entities": {}, "facts": {}, "summary": ""}, "profile": {}}}
+{"case_id": "rp_759af93196fc", "query": "请帮我接一位人工客服", "context": {}}
+{"case_id": "rp_eb50ad3275c1", "query": "先查订单 ORD-A001 的状态，再把查询结果交给人工客服。", "context": {"current_time": "2026-11-07T10:00:00+08:00", "timezone": "Asia/Shanghai", "episode": {"entities": {}, "facts": {}, "summary": ""}, "profile": {}}}
+{"case_id": "rp_efa7fe9160a3", "query": "先查订单 ORD-A001，校验订单是否允许退货，再申请退货，原因是拍错了，最后告知退货时效。", "context": {"current_time": "2026-11-07T10:00:00+08:00", "timezone": "Asia/Shanghai", "episode": {"entities": {}, "facts": {}, "summary": ""}, "profile": {}}}
+{"case_id": "rp_435ad0919cb2", "query": "并行查订单 ORD-A001、ORD-B002、ORD-C003 的物流，最后汇总三单结果。", "context": {"current_time": "2026-11-07T10:00:00+08:00", "timezone": "Asia/Shanghai", "episode": {"entities": {}, "facts": {}, "summary": ""}, "profile": {}}}
+{"case_id": "rp_be44ffd3fedc", "query": "请呼叫人工", "context": {}}
+{"case_id": "rp_cbfef317b970", "query": "退款一般几天到账？", "context": {}}
+{"case_id": "rp_afd5b28d8b4e", "query": "同时查订单 ORD-A001 的物流和订单 ORD-B002 的退款进度。", "context": {"current_time": "2026-11-07T10:00:00+08:00", "timezone": "Asia/Shanghai", "episode": {"entities": {}, "facts": {}, "summary": ""}, "profile": {}}}
+{"case_id": "rp_6e569cd85bef", "query": "先查订单 ORD-A001，再把收货地址改为北京市海淀区中关村南大街1号，修改后查询这笔订单物流。", "context": {"current_time": "2026-11-07T10:00:00+08:00", "timezone": "Asia/Shanghai", "episode": {"entities": {}, "facts": {}, "summary": ""}, "profile": {}}}
+{"case_id": "rp_9d7410c9b34c", "query": "先查订单 ORD-A001 的详细信息，再取消这笔未支付订单。", "context": {"current_time": "2026-11-07T10:00:00+08:00", "timezone": "Asia/Shanghai", "episode": {"entities": {}, "facts": {}, "summary": ""}, "profile": {}, "orders": [{"order_id": "ORD-A001", "status": "UNPAID"}]}}
+{"case_id": "rp_d36a6d17171d", "query": "你们的质保政策是什么", "context": {}}
+{"case_id": "rp_3cbd3b6c2959", "query": "不要给我申请退款，只告诉我退款规则", "context": {}}
+{"case_id": "rp_c25e424f0893", "query": "查昨天那笔订单的物流，也查一下前天那笔订单的退款进度。", "context": {"current_time": "2026-11-07T10:00:00+08:00", "timezone": "Asia/Shanghai", "episode": {"entities": {}, "facts": {}, "summary": ""}, "profile": {}, "orders": [{"order_id": "ORD-A001", "created_at": "2026-11-06T14:00:00+08:00"}, {"order_id": "ORD-B002", "created_at": "2026-11-05T14:00:00+08:00"}]}}
+{"case_id": "rp_0c4c84e0deb6", "query": "帮我转人工", "context": {}}
+{"case_id": "rp_774c927541fd", "query": "先查订单 ORD-A001，再查订单 ORD-B002，最后只为 ORD-B002 开发票，抬头是星海科技有限公司。", "context": {"current_time": "2026-11-07T10:00:00+08:00", "timezone": "Asia/Shanghai", "episode": {"entities": {}, "facts": {}, "summary": ""}, "profile": {}}}
+{"case_id": "rp_668f369511c4", "query": "你们客服上班时间是几点？", "context": {}}
+{"case_id": "rp_4add05c7f092", "query": "先给我查退款规则，再查订单 ORD-A001，然后申请退款，原因是拍错了。", "context": {"current_time": "2026-11-07T10:00:00+08:00", "timezone": "Asia/Shanghai", "episode": {"entities": {}, "facts": {}, "summary": ""}, "profile": {}}}
+{"case_id": "rp_36cfc205acdb", "query": "查询订单 ORD-A001 的物流；只有物流状态是 SHIPPING 才催件，否则只返回查询结果。", "context": {"current_time": "2026-11-07T10:00:00+08:00", "timezone": "Asia/Shanghai", "episode": {"entities": {}, "facts": {}, "summary": ""}, "profile": {}}}
+{"case_id": "rp_4fb98ea1269f", "query": "多谢你的帮助", "context": {}}
+{"case_id": "rp_f9e86d2906f0", "query": "配送服务覆盖哪些城市？", "context": {}}
+{"case_id": "rp_ecf3ba785586", "query": "让人工专员接手这次咨询", "context": {}}
+{"case_id": "rp_6e6be1bbf865", "query": "先查设备 DEV-100 的保修状态，在保则创建免费维修工单，过保则生成收费维修报价。", "context": {"current_time": "2026-11-07T10:00:00+08:00", "timezone": "Asia/Shanghai", "episode": {"entities": {}, "facts": {}, "summary": ""}, "profile": {}}}
+{"case_id": "rp_129d84273d4c", "query": "直接转人工，不需要机器人处理", "context": {}}
+{"case_id": "rp_b2a03103c7d6", "query": "先核对订单 ORD-B002，再为这笔订单申请退款，原因是拍错了。", "context": {"current_time": "2026-11-07T10:00:00+08:00", "timezone": "Asia/Shanghai", "episode": {"entities": {}, "facts": {}, "summary": ""}, "profile": {}}}
+{"case_id": "rp_98a3ce6b51de", "query": "独立为订单 ORD-A001 开发票，抬头是星海科技有限公司，并查询订单 ORD-B002 的物流。", "context": {"current_time": "2026-11-07T10:00:00+08:00", "timezone": "Asia/Shanghai", "episode": {"entities": {}, "facts": {}, "summary": ""}, "profile": {}}}
+{"case_id": "rp_597942cabeca", "query": "先查订单 ORD-A001 的详细信息，再查退款进度，最后告诉我售后人工客服的工作时间。", "context": {"current_time": "2026-11-07T10:00:00+08:00", "timezone": "Asia/Shanghai", "episode": {"entities": {}, "facts": {}, "summary": ""}, "profile": {}}}
+{"case_id": "rp_c98cfc4cd776", "query": "开票规则是什么", "context": {}}
+{"case_id": "rp_fef0d64d08d1", "query": "你好，不要开票，帮我查订单 ORD-A001 的物流和退款政策。", "context": {"current_time": "2026-11-07T10:00:00+08:00", "timezone": "Asia/Shanghai", "episode": {"entities": {}, "facts": {}, "summary": ""}, "profile": {}}}
+{"case_id": "rp_98d1f244ce9b", "query": "先查订单 ORD-A001，如果状态是 PAID 就申请退款，原因是拍错了，否则只说明退款规则。", "context": {"current_time": "2026-11-07T10:00:00+08:00", "timezone": "Asia/Shanghai", "episode": {"entities": {}, "facts": {}, "summary": ""}, "profile": {}}}
+{"case_id": "rp_af8949d21e30", "query": "账户注销规则是什么", "context": {}}
+{"case_id": "rp_ffdcc2c62d1e", "query": "独立查询订单 ORD-A001 的退款进度和通用开票规则，最后一起告诉我。", "context": {"current_time": "2026-11-07T10:00:00+08:00", "timezone": "Asia/Shanghai", "episode": {"entities": {}, "facts": {}, "summary": ""}, "profile": {}}}
+{"case_id": "rp_839fa72bfd4a", "query": "运费一般由谁承担？", "context": {}}
+{"case_id": "rp_08c3cec79213", "query": "hello", "context": {}}
+{"case_id": "rp_0268a63384bb", "query": "一边查订单 ORD-A001 的详情，一边介绍客服服务时间，分别处理后汇总。", "context": {"current_time": "2026-11-07T10:00:00+08:00", "timezone": "Asia/Shanghai", "episode": {"entities": {}, "facts": {}, "summary": ""}, "profile": {}}}
+{"case_id": "rp_7107615b7d58", "query": "您好", "context": {}}
+{"case_id": "rp_b02237b1584a", "query": "你好呀！", "context": {}}
+{"case_id": "rp_1486bee11fb3", "query": "查订单 ORD-A001，如果未支付就取消，如果已支付就申请退款，原因是拍错了。", "context": {"current_time": "2026-11-07T10:00:00+08:00", "timezone": "Asia/Shanghai", "episode": {"entities": {}, "facts": {}, "summary": ""}, "profile": {}}}
+{"case_id": "rp_90f0342ec917", "query": "如果 SKU-100 有库存就下单，否则登记到货提醒；库存已核实，请据此安排。", "context": {"current_time": "2026-11-07T10:00:00+08:00", "timezone": "Asia/Shanghai", "episode": {"entities": {}, "facts": {}, "summary": ""}, "profile": {}, "inventory": {"sku": "SKU-100", "available_quantity": 0, "verified": true}}}
+{"case_id": "rp_1e62b499527e", "query": "查询订单 ORD-A001 是否已经开票，未开票才申请，抬头是星海科技有限公司，已开票则只展示订单信息。", "context": {"current_time": "2026-11-07T10:00:00+08:00", "timezone": "Asia/Shanghai", "episode": {"entities": {}, "facts": {}, "summary": ""}, "profile": {}}}

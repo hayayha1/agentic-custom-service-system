@@ -8,6 +8,7 @@ from app.api.v1.badcases import router as badcase_router
 from app.api.v1.analytics import router as analytics_router
 from app.api.v1.sync import router as sync_router
 from app.api.v1.tenants import router as tenants_router
+from app.api.v1.agent_ops import router as agent_ops_router
 
 api_router = APIRouter()
 api_router.include_router(auth_router)
@@ -19,3 +20,4 @@ api_router.include_router(badcase_router)
 api_router.include_router(analytics_router)
 api_router.include_router(sync_router)
 api_router.include_router(tenants_router)
+api_router.include_router(agent_ops_router)

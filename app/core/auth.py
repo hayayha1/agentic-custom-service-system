@@ -135,6 +135,13 @@ async def get_current_user(
     role = raw_role.strip().lower() if raw_role else ROLE_USER
     if role not in ALL_ROLES:
         role = ROLE_USER
+    if token_user_id:
+        # Older demo tokens encoded the login alias (end_user/service_agent)
+        # rather than the stable customer/agent ID returned by login.
+        from app.api.v1.auth import PRESET_USERS
+        preset = PRESET_USERS.get(token_user_id)
+        if preset and preset["role"] == role:
+            token_user_id = preset["user_id"]
     
     tenant_id = (x_tenant_id or "").strip()
     if not tenant_id:
