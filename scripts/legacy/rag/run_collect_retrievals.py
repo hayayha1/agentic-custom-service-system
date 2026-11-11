@@ -64,7 +64,7 @@ async def collect_all_retrievals():
             all_records.append(record)
             print(f"[{idx+1:02d}/50] {q_id}: Retrieved {len(chunks)} chunks, Top1: {chunks[0]['doc_name']} -> {chunks[0]['heading_path'][:40]} (Score: {top_score:.4f})")
 
-    with open('scripts/cache_all_retrievals.json', 'w', encoding='utf-8') as f:
+    with open('data/evaluation/rag_cache/cache_all_retrievals.json', 'w', encoding='utf-8') as f:
         json.dump(all_records, f, ensure_ascii=False, indent=2)
     print("Done caching all retrievals.")
 

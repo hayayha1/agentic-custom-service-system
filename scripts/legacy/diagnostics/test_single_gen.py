@@ -5,7 +5,7 @@ import json
 sys.path.insert(0, os.path.abspath('.'))
 
 from app.services.model_service import model_service
-from scripts.test_generation_all import compute_key_facts_coverage
+from scripts.legacy.diagnostics.test_generation_all import compute_key_facts_coverage
 
 async def test():
     with open('data/evaluation/retrieval_results.json', encoding='utf-8') as f:

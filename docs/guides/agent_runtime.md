@@ -2,7 +2,7 @@
 
 ## 范围与入口
 
-依据根目录《Agent模块重构技术方案.md》实施。聊天 API 与现有订单、物流、退款、确认和澄清卡片保持兼容，新增 `agent_trace_id` 与可选 `approval_id`。
+依据[Agent 重构架构方案](../architecture/agent_refactor_plan.md)实施。聊天 API 与现有订单、物流、退款、确认和澄清卡片保持兼容，新增 `agent_trace_id` 与可选 `approval_id`。
 
 入口：`app/workflow/agent_customer_service_graph.py`，公开 `agent_customer_service_graph.ainvoke(...)`。实际编排在 `agent_runtime.py`，兼容旧 `customer_service_graph` 导入路径。调用方必须传入服务端验证的 `tenant_id/customer_id/user_id/role/session_id`，不能把模型参数作为身份来源。
 

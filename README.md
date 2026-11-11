@@ -1,124 +1,201 @@
-# 智能客服系统 (AI Customer Service Knowledge Base & RAG)
+# 知枢 SaaS · 智能客服与知识治理
 
-基于 **Python + FastAPI + PostgreSQL (pgvector) + LangGraph + SQLAlchemy** 构建的高可用智能客服知识库与智能检索系统。
+基于 FastAPI、LangGraph、SQLAlchemy 和 Vue 3 的企业客服演示项目，覆盖知识检索、客户会话、人工协同、业务工具及反馈治理，并提供可复现的 Agent 评测流程。
 
-Agent 已升级为可持久化的 Plan-and-Execute / ReAct 工作流，支持统一工具网关、审批恢复、三级记忆、观测和离线评测门禁。配置、迁移与验证边界见 [Agent 重构运行说明](docs/AGENT_REFACTOR.md)。
+**当前状态：可本地运行的演示与研发版本。**已有 Agent 持久化、审批恢复和工具网关实现；真实模型专项盲测尚未达标，已知缺口及原始结果公开保留，不能据此宣称已完成生产验收。
 
----
+[快速启动](#快速启动) · [目录结构](#目录结构) · [测试与评测](#测试与评测) · [文档导航](docs/README.md) · [失败分析](data/evaluation/route_planner_v1/results/native_v1/FAILURE_ANALYSIS.md)
 
-## 🌟 系统核心特性
+## 能做什么
 
-### 1. 三种角色的权限区分体系 (RBAC)
-系统严格针对当前已实现的功能，区分了三种角色的菜单能见度、操作权限与行级数据边界：
-- **👤 1. 普通用户 (user)**：
-  - **仅限访问【ai客服对话】**。自动隐藏【知识库管理】和【知识片段管理】；
-  - **行级数据隔离**：会话列表仅展示自己本人的专属会话，无法查阅其他客户会话；
-  - **允许操作**：智能问答、查看改写、查看本人业务卡片（订单/物流）、查阅命中来源详情、申请“转接人工客服”；
-  - **越权拦截**：无权访问或修改知识库与知识文档，违规调用直接返回 403 Forbidden。
-- **🎧 2. 技术客服 (tech_agent)**：
-  - **允许访问【ai客服对话】与【知识片段管理】**。自动隐藏【知识库管理】；
-  - **会话协作与接管**：可查看所有进线客户会话列表，可接管会话以座席专员身份回复，并有权点击“结束人工，切回AI”；
-  - **知识片段维护**：可上传/新增文档（MD/TXT）、批量导入 FAQ、查看版本历史并执行版本回滚、删除文档；
-  - **越权拦截**：无权创建/删除知识库或修改检索阈值超参，违规调用直接返回 403 Forbidden。
-- **🛡️ 3. 超级管理员 (admin)**：
-  - **拥有全量功能与全菜单访问权限**（ai客服对话、知识库管理、知识片段管理）；
-  - **专属管理权限**：创建产品知识库、微调检索与重排阈值（TopK / 0.80 / 0.50）、执行知识库级联物理删除。
+| 模块 | 已有能力 |
+|---|---|
+| 知识库 | 按租户/产品线管理知识库，导入 Markdown、TXT、FAQ，文档分块、版本及回滚 |
+| 检索与问答 | BM25 与向量召回、融合及重排，展示来源片段，低置信度推荐或兜底 |
+| 会话协同 | 保存会话和消息、分配人工坐席、转人工及恢复 AI 接待 |
+| Agent | 快慢路由、结构化规划、工具结果反馈循环、缺参追问、审批挂起与恢复 |
+| 工具网关 | 参数校验、客户归属、风险分级、写入防重、限流、读取重试与熔断 |
+| 记忆与状态 | 工作状态快照、会话实体和摘要、显式客户画像；SQL 持久化及可选 Redis 缓存 |
+| 反馈治理 | 差评、低置信度和失败轨迹归集，离线候选生成、回归比较及发布待办 |
+| 观测 | 脱敏执行轨迹、可选 OTLP 导出、指标接口、Grafana 模板和告警规则 |
 
-### 2. 前端三大功能模块（左侧主菜单已深度接入业务）
-- **🤖 1. ai客服对话（每个用户一个独立会话）**：
-  - **真实会话持久化**：会话数据（`chat_sessions`）与历史消息流（`chat_messages`）全量存入数据库，刷新页面后会话状态与问答记录无缝还原。
-  - **多客户支持**：左侧展示客户列表（张先生、李总监等），支持一键“+ 接新客户”添加会话。
-  - **业务接口深度接入**：用户询问“查我的订单物流”、“退款进度”时，自动路由并返回**交互式业务卡片**（订单明细、顺丰实时物流时间轴、售后退款单阶段追踪）。
-  - **转人工客服闭环**：点击“👩‍💼 转接人工客服”，会话状态切换为人工座席接管，由人工客服应答，并支持随时“结束人工服务，切回AI”。
-  - **知识来源联动抽屉 (Source Inspector)**：点击任意命中来源，右侧滑出抽屉，实时高亮查阅该切片的原始段落、字数及元数据，并可一键跳转至知识片段管理。
-- **📚 2. 知识库管理**：
-  - 按业务产品线（如 `SAAS_CLOUD`）建立独立知识库与数据隔离。
-  - 知识库基础操作（新建、编辑、状态启用/停用）。
-  - **级联删除机制**：删除知识库时，数据库事务级联清空关联的全部文档、历史版本、切片 (Chunks) 及向量索引。
-  - **独立检索超参配置**：不同知识库可独立微调 `BM25 TopK`、`向量 TopK`、`Rerank TopK`、`直接回答阈值` (默认0.80)、`相似澄清阈值` (默认0.50)。
-- **🧩 3. 知识片段管理**：
-  - **支持本地文件直传**：新增文档时可直接选择本地 `.md` 或 `.txt` 文件一键上传解析，自动分块入库。
-  - **版本管理与一键回滚**：文档编辑后自动归档历史快照、版本号递增并重构索引；支持查看历史版本差异并一键回滚。
-  - **FAQ 批量导入**：支持标准问法 + 多个相似问法 + 标准答案结构化录入。
+以上为代码能力范围，具体可靠性以测试结果为准。订单、物流、退款和开票目前使用项目内的模拟业务适配器。
 
----
+## 快速启动
 
-## 🛠️ 技术架构
+需要 **Python 3.11 或更高版本**，当前本地验证环境为 Python 3.11.9。前端静态资源由应用提供，无需 Node.js 构建。
 
-- **后端**：Python 3.10+ / FastAPI / SQLAlchemy 2.0 (AsyncIO) / Pydantic V2
-- **向量数据库与持久化**：PostgreSQL 15+ 搭配 `pgvector` 扩展（本地开发/测试模式下支持通用自适应降级模式）
-- **Agent 工作流编排**：LangGraph 状态图（StateGraph）
-- **混合检索与重排**：
-  - 倒排分词检索：`jieba` + `rank-bm25`
-  - 密集向量检索：`pgvector` 余弦近邻
-  - 候选集融合：加权 RRF 算法 + 文档知识优先级系数加成
-  - 语义重排：Cross-Encoder Rerank
-- **前端交互**：单页极简现代化架构（Tailwind CSS + Vue 3），开箱即用无需 node_modules 繁琐编译。
+### Windows / PowerShell
 
----
+```powershell
+git clone https://github.com/hayayha1/-.git zhishu-saas
+cd zhishu-saas
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+if (-not (Test-Path .env)) { Copy-Item .env.example .env }
+.\一键启动.bat
+```
 
-## 🚀 快速启动指南
+启动脚本优先选择项目的 `.venv`，然后是 `venv`、系统 `python`，最后兼容原有的本机解释器路径。`一键启动.bat`、`启动客服系统.bat` 均调用同一个 `start.bat`。
 
-### 1. 安装依赖
+也可以直接运行：
+
+```powershell
+.\.venv\Scripts\python.exe run.py
+```
+
+`run.py` 会初始化应用、建表和演示数据，自动打开浏览器。默认访问：
+
+- 网页：[http://localhost:8000/](http://localhost:8000/)
+- API 文档：[http://localhost:8000/docs](http://localhost:8000/docs)
+
+如果 8000 被占用，启动器会尝试 8001～8099，以终端显示及自动打开的地址为准。更新代码后需停止旧服务并重新启动，启动器未开启自动重载。
+
+### Linux / macOS
+
 ```bash
-pip install -r requirements.txt
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements.txt
+[ -f .env ] || cp .env.example .env
+.venv/bin/python run.py
 ```
 
-### 2. 启动服务
-```bash
-python run.py
-```
-终端启动后将自动执行数据库建表与演示数据（Demo Seed）注入：
-- 🌐 **访问系统 Web 界面**：[http://127.0.0.1:8000](http://127.0.0.1:8000)
-- 📖 **访问交互式 API 文档 (Swagger)**：[http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+## 配置
 
-### 3. 执行自动化测试
-```bash
-$env:PYTHONPATH="."
-pytest -v tests/test_customer_service.py
+完整模板见 [.env.example](.env.example)。保留占位凭证即可体验离线路径；填写有效凭证后使用对应外部模型服务。
+
+| 配置 | 用途 / 默认行为 |
+|---|---|
+| `OPENAI_API_KEY` / `OPENAI_BASE_URL` / `LLM_MODEL` | 原生工具调用与语言模型，使用 OpenAI 兼容 HTTP 协议 |
+| `EMBEDDING_*` / `RERANK_*` | 向量和重排模型；没有有效凭证时可使用内置降级路径 |
+| `DATABASE_URL` | 会话和知识库数据库，默认 `sqlite+aiosqlite:///./knowledge_base.db` |
+| `AGENT_DATABASE_URL` | Agent 独立状态库，默认 `sqlite+aiosqlite:///./agent_state.db` |
+| `AGENT_REDIS_URL` | 可选 Redis 热缓存；未配置时由 SQL 承担持久化 |
+| `AGENT_MAX_ITERATIONS` | 默认最多 8 次 Agent 工具执行，网关内部重试另计 |
+| `AGENT_TIMEOUT_SECONDS` | 默认单次请求 60 秒，不是跨多轮会话的总时限 |
+| `AGENT_OTLP_ENDPOINT` | 可选 OTLP HTTP Trace Collector 地址 |
+
+SQLite 适合本地演示；多实例部署应使用共享 PostgreSQL，向量功能需要 pgvector。应用主库切换为 PostgreSQL 时显式配置 `PG_VECTOR_ENABLED=true`。相关权限、向量维度、Redis 与追踪配置见 [Agent 运行指南](docs/guides/agent_runtime.md)。
+
+`.env`、本地数据库、虚拟环境、`scratch/` 和 `local_artifacts/` 不上传 GitHub。应用不会自动部署外部数据库、监控平台或真实 ERP。
+
+## 演示账号
+
+| 角色 | 账号 | 密码 |
+|---|---|---|
+| 平台管理员 | `platform_admin` | `admin123` |
+| 企业管理员 | `tenant_admin` | `admin123` |
+| 知识主管 | `knowledge_master` | `km123` |
+| 服务坐席 | `service_agent` | `agent123` |
+| 终端客户 | `end_user` | `user123` |
+
+演示认证包含预置账号、模拟令牌及角色请求头，尚不是可直接面向公网的生产认证系统。角色说明见 [角色与权限设计](docs/design/roles_and_permissions_scheme.md)。
+
+## 目录结构
+
+```text
+.
+├── app/                         # 应用代码
+│   ├── api/v1/                  # 会话、知识库、租户、同步与 AgentOps 接口
+│   ├── core/                    # 配置和演示身份上下文
+│   ├── db/                      # 数据库连接与初始化
+│   ├── models/                  # SQLAlchemy 模型
+│   ├── schemas/                 # 请求及响应契约
+│   ├── services/                # Agent、检索、分块、同步与业务适配器
+│   ├── static/                  # Vue 页面和嵌入式组件
+│   ├── workflow/                # 工作流入口与运行时
+│   └── main.py                  # FastAPI 应用及生命周期
+├── data/
+│   ├── md/、txt/、faq/          # 演示知识资料
+│   └── evaluation/              # 回归集、盲测集、结果及历史 RAG 资料
+├── docs/
+│   ├── architecture/            # 系统设计与 Agent 重构方案
+│   ├── design/                  # 权限、同步、订阅、BadCase 等历史设计
+│   ├── guides/                  # 运行与迁移说明
+│   └── README.md                # 文档导航
+├── scripts/                     # 保留原命令路径的现用评测入口
+│   └── legacy/                  # 历史诊断、维护、源码补丁和 RAG 工具
+├── tests/                       # 自动化测试
+├── ops/                         # Grafana 仪表盘与告警模板
+├── local_artifacts/             # 仅本地：文稿、PPT、图片及旧生成器归档
+├── scratch/                     # 仅本地：测试数据库和临时运行输出
+├── .env.example                 # 环境变量模板
+├── .gitattributes               # 保留封存文件的字节指纹
+├── pytest.ini                   # 默认只收集 tests/
+├── requirements.txt
+├── run.py
+├── start.bat                    # Windows 统一启动器
+├── 一键启动.bat                 # 兼容快捷入口
+└── 启动客服系统.bat             # 兼容快捷入口
 ```
 
----
+实际运行时生成的 `.env` 和数据库文件可能出现在根目录；它们保留原路径，避免影响现有本地数据。历史文稿与个人演示资料已移入不上传的本地产物目录，原始路径及移动前指纹保存在该目录的清单中。
 
-## 📂 项目代码目录结构
+## 测试与评测
 
+### 本地自动化测试
+
+从根目录运行 `python -m pytest`，默认仅收集 `tests/`。测试会写入数据库，推荐先按 [测试说明](tests/README.md) 设置独立测试数据库并关闭外部模型调用。
+
+Agent 相关回归：
+
+```powershell
+python -m pytest tests/test_agent_customer_service.py tests/test_agent_runtime.py tests/test_agent_api.py tests/test_route_planner_benchmark.py -q
 ```
-d:\projects\智能客服
-├── app/
-│   ├── api/
-│   │   └── v1/
-│   │       ├── chat.py             # 智能客服对话接口 (LangGraph驱动)
-│   │       ├── chunks.py           # 知识切片检索与明细
-│   │       ├── documents.py        # 知识文档与FAQ管理 (版本回滚/批量导入)
-│   │       ├── knowledge_bases.py  # 知识库CRUD、级联删除与配置
-│   │       └── __init__.py
-│   ├── core/
-│   │   └── config.py               # 系统配置与环境变量
-│   ├── db/
-│   │   └── session.py              # 异步SQLAlchemy引擎与pgvector初始化
-│   ├── models/
-│   │   ├── base.py                 # ORM基类与时间戳混入
-│   │   ├── chunk.py                # 知识切片与向量模型 (pgvector适配)
-│   │   ├── document.py             # 知识文档模型
-│   │   ├── document_version.py     # 文档历史版本快照模型
-│   │   ├── faq.py                  # FAQ问答结构模型
-│   │   └── knowledge_base.py       # 知识库主模型
-│   ├── schemas/                    # Pydantic请求与响应契约
-│   ├── services/
-│   │   ├── chunking/
-│   │   │   └── splitter.py         # FAQ/MD/TXT三大切片器与元数据注水
-│   │   ├── model_service.py        # 大模型改写、分类、Embedding与Rerank
-│   │   └── retrieval/
-│   │       └── engine.py           # BM25 + 向量检索、RRF融合打分与优先级加成
-│   ├── static/
-│   │   └── index.html              # 完整前端演示界面
-│   ├── workflow/
-│   │   └── customer_service_graph.py # LangGraph全流程状态图编排
-│   └── main.py                     # FastAPI入口与演示数据填充
-├── tests/
-│   └── test_customer_service.py    # 5大核心场景端到端自动化测试
-├── knowledge_base_system_spec.md   # 详细功能设计规范与架构文档
-├── requirements.txt                # 依赖包列表
-├── run.py                          # 一键启动脚本
-└── README.md                       # 说明文档
+
+本地断言检查与真实模型评测分别报告。全量套件中已有企业注册角色断言与现有行为不一致的问题，详见测试说明；目录整理没有通过跳过用例或更改业务行为隐藏该问题。
+
+### 隔离业务回归
+
+```powershell
+python -m scripts.evaluate_agent --output scratch/agent-evaluation.json
 ```
+
+默认运行 19 个离线场景，不提交真实业务；`--live` 会启用已配置模型。该流程与下面的路由/规划专项盲测目的不同。
+
+### 路由与 Planner 原生模型盲测
+
+```powershell
+python -m scripts.run_route_planner_blind --mode native --repeats 3 --concurrency 3 --output scratch/route-planner-new-run
+python -m scripts.score_route_planner --run-dir scratch/route-planner-new-run
+```
+
+先完成预测并封存，再读取标准答案评分。被测模型只接收问题、上下文和生产工具 Schema，推理进程禁止读取标准答案与历史结果。native 模式需要有效凭证并产生模型调用用量，输出目录必须是新目录。
+
+### 已公开的基线结果
+
+2026-11-07 的固定基线使用 `deepseek-chat`，100 条用例各运行 3 次：
+
+| 指标 | 基线结果 |
+|---|---:|
+| 全项通过 | 164/300，54.7% |
+| 路由准确率 | 71.0% |
+| Deep 目标完整覆盖率 | 61.1% |
+| DAG 结构合法率 | 79.4% |
+| 必要依赖满足率 | 47.2% |
+| 独立任务关系端到端满足率 | 57.6% |
+| 结构化条件满足率 | 0% |
+
+条件分支、路由否定/复合语义以及澄清节点契约仍有缺口。独立任务指标中有28对因上游目标缺失而无法核验；能核验的38对关系均正确，不能把全部低分都解释为模型错误串行化任务。
+
+- [数据集与盲测约定](data/evaluation/route_planner_v1/README.md)
+- [完整测试报告](data/evaluation/route_planner_v1/results/native_v1/REPORT.md)
+- [详细失败原因](data/evaluation/route_planner_v1/results/native_v1/FAILURE_ANALYSIS.md)
+- [46 个失败 Case 的原始证据](data/evaluation/route_planner_v1/results/native_v1/FAILED_CASE_DETAILS.md)
+- [100 条逐项结果 CSV](data/evaluation/route_planner_v1/results/native_v1/case_results.csv)
+
+基线输入、答案、预测与被测源码由指纹关联，目录整理保留其原始路径和字节内容，不改写历史成绩。
+
+## API 与运维入口
+
+| 前缀 / 端点 | 用途 |
+|---|---|
+| `/api/v1/auth` | 演示登录与身份 |
+| `/api/v1/chat` | 会话、消息、业务卡片与人工协同 |
+| `/api/v1/kbs`、`/documents`、`/chunks` | 知识库、文档和检索片段；后两者同样位于 `/api/v1` 下 |
+| `/api/v1/badcases` | 反馈与知识治理 |
+| `/api/v1/tenants`、`/api/v1/sync` | 租户管理与来源同步 |
+| `/api/v1/agent/traces/{trace_id}` | 当前租户的脱敏轨迹，需相应管理权限 |
+| `/api/v1/agent/metrics` | 平台运维指标 |
+
+完整接口以启动后的 `/docs` 为准。监控模板见 [ops/](ops/README.md)，更多架构、业务设计与迁移资料见 [docs/](docs/README.md)。

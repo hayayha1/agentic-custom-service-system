@@ -123,7 +123,7 @@ def main():
         k = int(sys.argv[2]) if len(sys.argv) > 2 else 3
         asyncio.run(search(q, k))
     else:
-        print("提示：可在命令行直接运行：python scripts/test_search.py \"你的问题\" 3")
+        print("提示：可在命令行直接运行：python scripts/legacy/diagnostics/test_search.py \"你的问题\" 3")
         print("也可以直接在下方交互式输入（输入 exit 或 q 退出）：")
         while True:
             try:

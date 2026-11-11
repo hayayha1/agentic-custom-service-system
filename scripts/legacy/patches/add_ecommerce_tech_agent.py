@@ -2,7 +2,7 @@ import sys
 
 sys.stdout.reconfigure(encoding='utf-8')
 
-with open('scripts/build_frontend.py', 'r', encoding='utf-8') as f:
+with open('scripts/legacy/patches/build_frontend.py', 'r', encoding='utf-8') as f:
     text = f.read()
 
 # 1. Update login card width from max-w-md to max-w-xl
@@ -130,8 +130,8 @@ new_role_label = '''        const roleLabels = {
 assert old_role_label in text, "old_role_label not found"
 text = text.replace(old_role_label, new_role_label, 1)
 
-# Write back to scripts/build_frontend.py
-with open('scripts/build_frontend.py', 'w', encoding='utf-8') as f:
+# Write back to scripts/legacy/patches/build_frontend.py
+with open('scripts/legacy/patches/build_frontend.py', 'w', encoding='utf-8') as f:
     f.write(text)
 
-print("scripts/build_frontend.py successfully patched with 电商组技术客服!")
+print("scripts/legacy/patches/build_frontend.py successfully patched with 电商组技术客服!")

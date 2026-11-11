@@ -1,7 +1,7 @@
 import os
 import re
 
-with open("scripts/build_frontend.py", "r", encoding="utf-8") as f:
+with open("scripts/legacy/patches/build_frontend.py", "r", encoding="utf-8") as f:
     content = f.read()
 
 # ================= 1. 在 BadCase 工作台顶部加入 3 大子 Tab 导航 =================
@@ -997,7 +997,7 @@ if old_return in content:
     content = content.replace(old_return, new_return, 1)
     print("Vue return object updated successfully.")
 
-with open("scripts/build_frontend.py", "w", encoding="utf-8") as f:
+with open("scripts/legacy/patches/build_frontend.py", "w", encoding="utf-8") as f:
     f.write(content)
 
-print("scripts/build_frontend.py patch complete!")
+print("scripts/legacy/patches/build_frontend.py patch complete!")

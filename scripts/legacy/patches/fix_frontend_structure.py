@@ -57,7 +57,7 @@ if target_regex in html:
 with open("app/static/index.html", "w", encoding="utf-8") as f:
     f.write(html)
 
-with open("scripts/build_frontend.py", "w", encoding="utf-8") as f:
+with open("scripts/legacy/patches/build_frontend.py", "w", encoding="utf-8") as f:
     f.write(html)
 
-print("Saved cleanly to app/static/index.html and scripts/build_frontend.py")
+print("Saved cleanly to app/static/index.html and scripts/legacy/patches/build_frontend.py")

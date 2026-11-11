@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 import json
 import os
+from pathlib import Path
 
-src_path = r"D:\projects\智能客服\data\evaluation\test_dataset.json"
-out_dir = r"D:\projects\智能客服\data\evaluation"
+out_dir = Path(__file__).resolve().parents[3] / "data" / "evaluation"
+src_path = out_dir / "test_dataset.json"
 
 with open(src_path, "r", encoding="utf-8") as f:
     data = json.load(f)

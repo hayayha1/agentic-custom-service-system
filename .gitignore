@@ -16,6 +16,7 @@ venv/
 
 # Local test runs and generated scratch artifacts
 scratch/
+local_artifacts/
 
 # Databases
 *.db

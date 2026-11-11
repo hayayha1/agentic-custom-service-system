@@ -13,14 +13,14 @@ if idx != -1:
         f.write(content)
     print('Successfully updated app/static/index.html')
 
-# Also update scripts/build_frontend.py
-with open('scripts/build_frontend.py', 'r', encoding='utf-8') as f:
+# Also update scripts/legacy/patches/build_frontend.py
+with open('scripts/legacy/patches/build_frontend.py', 'r', encoding='utf-8') as f:
     bf_content = f.read()
 
 bf_idx = bf_content.find(target)
 if bf_idx != -1:
     bf_end_idx = bf_content.find('map(s => s.trim())', bf_idx)
     bf_content = bf_content[:bf_idx] + replacement + bf_content[bf_end_idx:]
-    with open('scripts/build_frontend.py', 'w', encoding='utf-8') as f:
+    with open('scripts/legacy/patches/build_frontend.py', 'w', encoding='utf-8') as f:
         f.write(bf_content)
-    print('Successfully updated scripts/build_frontend.py')
+    print('Successfully updated scripts/legacy/patches/build_frontend.py')

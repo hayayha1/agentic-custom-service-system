@@ -3,7 +3,7 @@ import sys
 
 sys.stdout.reconfigure(encoding='utf-8')
 
-with open('scripts/cache_all_retrievals.json', 'r', encoding='utf-8') as f:
+with open('data/evaluation/rag_cache/cache_all_retrievals.json', 'r', encoding='utf-8') as f:
     dataset = json.load(f)
 
 from eval_strategies_summary import check_hard_match, check_soft_match, composite_ids

@@ -6,7 +6,7 @@ import jieba
 sys.stdout.reconfigure(encoding='utf-8')
 jieba.setLogLevel(jieba.logging.INFO)
 
-with open('scripts/cache_all_retrievals.json', 'r', encoding='utf-8') as f:
+with open('data/evaluation/rag_cache/cache_all_retrievals.json', 'r', encoding='utf-8') as f:
     dataset = json.load(f)
 
 def clean_text(text):

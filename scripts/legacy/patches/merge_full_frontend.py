@@ -1,8 +1,8 @@
 import os
 import re
 
-# 1. Read base template with BadCase module from scripts/build_frontend.py
-with open('scripts/build_frontend.py', 'r', encoding='utf-8') as f:
+# 1. Read base template with BadCase module from scripts/legacy/patches/build_frontend.py
+with open('scripts/legacy/patches/build_frontend.py', 'r', encoding='utf-8') as f:
     html = f.read().replace('\r\n', '\n')
 
 # 2. Read the user's reports section from app/static/index.html

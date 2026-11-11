@@ -1,4 +1,4 @@
-with open('scripts/build_frontend.py', 'r', encoding='utf-8') as f:
+with open('scripts/legacy/patches/build_frontend.py', 'r', encoding='utf-8') as f:
     c = f.read()
 
 c = c.replace(
@@ -18,7 +18,7 @@ c = c.replace(
     'item.top_heading || item.top_doc || item.matched_heading'
 )
 
-with open('scripts/build_frontend.py', 'w', encoding='utf-8') as f:
+with open('scripts/legacy/patches/build_frontend.py', 'w', encoding='utf-8') as f:
     f.write(c)
 
 print('Updated build_frontend.py modal items')

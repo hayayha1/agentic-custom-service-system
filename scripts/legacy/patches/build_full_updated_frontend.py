@@ -4,7 +4,7 @@ import sys
 sys.stdout.reconfigure(encoding='utf-8')
 
 # Read original build_frontend.py
-with open('scripts/build_frontend.py', 'r', encoding='utf-8') as f:
+with open('scripts/legacy/patches/build_frontend.py', 'r', encoding='utf-8') as f:
     orig = f.read()
 
 print("Original length:", len(orig))
@@ -1557,7 +1557,7 @@ orig = orig.replace(target_return_end, replacement_return_end, 1)
 print("10. Return statement updated with all badcase variables.")
 
 # Write updated build_frontend.py
-with open('scripts/build_frontend.py', 'w', encoding='utf-8') as f:
+with open('scripts/legacy/patches/build_frontend.py', 'w', encoding='utf-8') as f:
     f.write(orig)
 
-print("Updated scripts/build_frontend.py written successfully!")
+print("Updated scripts/legacy/patches/build_frontend.py written successfully!")
