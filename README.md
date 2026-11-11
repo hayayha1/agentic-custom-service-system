@@ -28,7 +28,7 @@
 ### Windows / PowerShell
 
 ```powershell
-git clone https://github.com/hayayha1/-.git zhishu-saas
+git clone https://github.com/hayayha1/agentic-custom-service-system.git zhishu-saas
 cd zhishu-saas
 python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
